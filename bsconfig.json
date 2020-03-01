@@ -16,12 +16,6 @@
     "in-source": true
   },
   "suffix": ".bs.js",
-  "bs-dependencies": [
-    "bs-log"
-  ],
-  "bs-dev-dependencies": [
-    "@glennsl/bs-jest"
-  ],
   "bsc-flags": [
     "-bs-super-errors",
     "-open Belt"
@@ -30,5 +24,14 @@
     "error": "+101"
   },
   "namespace": true,
-  "refmt": 3
+  "refmt": 3,
+  "bs-dependencies": [
+    "bs-log"
+  ],
+  "bs-dev-dependencies": [
+    "@glennsl/bs-jest"
+  ],
+  "ppx-flags": [
+    "bs-log/ppx"
+  ]
 }
