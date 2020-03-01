@@ -1,0 +1,35 @@
+{
+  "name": "@karoshibee/re-tree",
+  "version": "0.1.0",
+  "description": "A parent/child tree inspired by Atlassian ToolKit Tree",
+  "scripts": {
+    "build:bs": "BS_LOG=off bsb -clean-world -make-world",
+    "build:bs:dev": "BS_LOG=*,org-re-org=* bsb -clean-world -make-world",
+    "watch:bs": "BS_LOG=*,org-re-org=* bsb -clean-world -make-world -w",
+    "watch:jest": "jest --coverage --watchAll",
+    "clean": "yarn run clean:bs && yarn run clean:dist",
+    "clean:bs": "bsb -clean-world",
+    "clean:dist": "rm -rf dist",
+    "coverage": "nyc report --temp-directory=coverage --reporter=text-lcov | coveralls",
+    "test": "yarn run build:bs:dev && jest --coverage"
+  },
+  "keywords": [
+    "BuckleScript"
+  ],
+  "author": "simon.parry@karoshibee.com",
+  "license": "MIT",
+  "dependencies": {
+    "bs-log": "^1.1.0"
+  },
+  "devDependencies": {
+    "bs-platform": "^7.0.1",
+    "@glennsl/bs-jest": "^0.4.9",
+    "coveralls": "^3.0.9",
+    "nyc": "^15.0.0"
+  },
+  "jest": {
+    "transformIgnorePatterns": [
+      "/node_modules/(?!@glennsl/bs-jest|bs-platform|bs-log|@glennsl/bs-json).+\\.js$"
+    ]
+  }
+}
