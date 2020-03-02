@@ -399,3 +399,35 @@ describe("setSubGraphForNode-should-set-subgraph", () => {
                 })
   };
 });
+
+describe("updteChildren-should-update", () => {
+  open Expect;
+
+  let _test = (g, n, vl) => {
+    let data = g->M.dataForNode(ID.create(n))->Option.getExn;
+    test("masterLookupHasCorrectData", () => {
+      expect(data.one) |> toBe(vl)
+    });
+  };
+
+  let g = makeGraph();
+  _test(g, "1", 1);
+  _test(g, "2", 2);
+  _test(g, "3", 3);
+  _test(g, "4", 4);
+
+  let g1 = g->M.updateChildren(ID.create("1"), d => {...d, one: 200});
+
+  _test(g1, "1", 1);
+  _test(g1, "2", 200);
+  _test(g1, "3", 200);
+  _test(g1, "4", 4);
+
+  let g2 =
+    g->M.updateChildren(ID.create("not_there"), d => {...d, one: 200});
+
+  _test(g2, "1", 1);
+  _test(g2, "2", 2);
+  _test(g2, "3", 3);
+  _test(g2, "4", 4);
+});
