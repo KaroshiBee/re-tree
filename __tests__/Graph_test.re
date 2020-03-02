@@ -347,15 +347,12 @@ describe("keep", () => {
     expect(path->P.eq(P.fromList(["1"]))) |> toBe(true)
   });
 
-  let g2 = g->M.keep((id, d) => d.one < 2 || id == id4);
+  let g2 = g->M.keep((id, d) => d.one <= 2 || id == id4);
+  // this should remove 4 because it is no longer reachable
   _test(g2, "1", true);
-  _test(g2, "2", false);
+  _test(g2, "2", true);
   _test(g2, "3", false);
-  _test(g2, "4", true);
-  let path = g2->M.pathFromNode(id4)->Option.getExn;
-  test("4PathUp", () => {
-    expect(path->P.eq(P.fromList(["1"]))) |> toBe(true)
-  });
+  _test(g2, "4", false);
 
   let g3 = g->M.keep((_id, d) => d.one < 4);
   _test(g3, "1", true);

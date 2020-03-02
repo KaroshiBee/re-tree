@@ -421,6 +421,7 @@ module Graph: GRAPH = {
   let keep = (graph: t('a), f: (ID.t, 'a) => bool): t('a) => {
     // partition masterLookup into (keeping, discarding)
     // then remove from tree whats in the discard pile
+    // but making sure that remaining nodes are all reachable from the root
     // then reform smaller master lookup by getting new paths
     let (willKeep, willDiscard) =
       graph.masterLookup
@@ -435,7 +436,7 @@ module Graph: GRAPH = {
         (tree, idAndPath) => {
           let id = fst(idAndPath);
           let dataWithPath = snd(idAndPath);
-          tree->IDTree.removeChild(
+          tree->IDTree.removeSubtree(
             dataWithPath.pathUp,
             id->I.convertFocusToChild,
           );
