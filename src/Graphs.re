@@ -25,7 +25,7 @@ module type GRAPH = {
   let setSubGraphForNode: (t('a), ID.t, t('a)) => Result.t(t('a), string);
   let moveSubtree: (t('a), CID.t, PID.t) => Result.t(t('a), string);
   let map: (t('a), 'a => 'b) => t('b);
-  //let mapChildren: (t('a), 'a => 'b) => t('b);
+  let updateChildren: (t('a), 'a => 'a) => t('a);
   let forEach: (t('a), (ID.t, 'a) => unit) => unit;
   let keep: (t('a), (ID.t, 'a) => bool) => t('a);
   let toArray: t('a) => array('a);
@@ -394,15 +394,20 @@ module Graph: GRAPH = {
     };
   };
 
-  /* let mapChildren = (graph: t('a), f: 'a => 'b): t('b) => { */
-  /*   let children = graph.tree->children; */
-  /*   let masterLookup = graph.masterLookup->ID.Map. */
-  /*   { */
-  /*     ...graph, */
-  /*     masterLookup: */
-  /*       graph.masterLookup->Map.map(d => {...d, value: f(d.value)}), */
-  /*   }; */
-  /* }; */
+  let updateChildren = (graph: t('a), f: 'a => 'a): t('a) => {
+    let idsToUpdate =
+      graph.tree
+      ->IDTree.children
+      ->Map.keysToArray
+      ->Array.map(I.convertChildToFocus)
+      ->Array.map(id => {
+          let d = graph.masterLookup->Map.getExn(id);
+          (id, {...d, value: f(d.value)});
+        });
+
+    let masterLookup = graph.masterLookup->Map.mergeMany(idsToUpdate);
+    {...graph, masterLookup};
+  };
 
   let forEach = (graph: t('a), f: (ID.t, 'a) => unit): unit => {
     graph.masterLookup->Map.forEach((k, v) => {f(k, v.value)});

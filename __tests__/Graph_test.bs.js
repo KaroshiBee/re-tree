@@ -2,7 +2,11 @@
 'use strict';
 
 var Jest = require("@glennsl/bs-jest/src/jest.js");
+var Caml_obj = require("bs-platform/lib/js/caml_obj.js");
+var Belt_Option = require("bs-platform/lib/js/belt_Option.js");
+var Belt_Result = require("bs-platform/lib/js/belt_Result.js");
 var BrowserLogger = require("bs-log/src/BrowserLogger.bs.js");
+var Path$KaroshibeeReTree = require("../src/Path.bs.js");
 var Graphs$KaroshibeeReTree = require("../src/Graphs.bs.js");
 var Identity$KaroshibeeReTree = require("../src/Identity.bs.js");
 
@@ -29,6 +33,388 @@ function makeGraph(param) {
               two: "four"
             }, Identity$KaroshibeeReTree.convertFocusToParent(id3));
 }
+
+Jest.describe("canMakeEmpty", (function (param) {
+        var g = Graphs$KaroshibeeReTree.Graph.empty(/* () */0);
+        Jest.test("hasNoLookup", (function (param) {
+                return Jest.Expect.toBe(0, Jest.Expect.expect(Graphs$KaroshibeeReTree.Graph.size(g)));
+              }));
+        Jest.test("hasNoTree", (function (param) {
+                return Jest.Expect.toBe(false, Jest.Expect.expect(Graphs$KaroshibeeReTree.Graph.hasChildren(g)));
+              }));
+        return Jest.test("containsNothing", (function (param) {
+                      return Jest.Expect.toBe(false, Jest.Expect.expect(Graphs$KaroshibeeReTree.Graph.containsId(g, Identity$KaroshibeeReTree.FocusId.create("asd"))));
+                    }));
+      }));
+
+Jest.describe("addImmediateChildren", (function (param) {
+        var g = Graphs$KaroshibeeReTree.Graph.addNode(Graphs$KaroshibeeReTree.Graph.empty(/* () */0), Identity$KaroshibeeReTree.FocusId.create("1"), {
+              one: 4,
+              two: "four"
+            });
+        Jest.test("oneChildAdded", (function (param) {
+                return Jest.Expect.toBe(1, Jest.Expect.expect(Graphs$KaroshibeeReTree.Graph.size(g)));
+              }));
+        Jest.test("childIsInChildrenCollection", (function (param) {
+                return Jest.Expect.toBe(true, Jest.Expect.expect(Graphs$KaroshibeeReTree.Graph.containsId(g, Identity$KaroshibeeReTree.FocusId.create("1"))));
+              }));
+        Jest.test("childIsInMasterLookup", (function (param) {
+                return Jest.Expect.toBe(true, Jest.Expect.expect(Graphs$KaroshibeeReTree.Graph.containsId(g, Identity$KaroshibeeReTree.FocusId.create("1"))));
+              }));
+        var data = Belt_Option.getExn(Graphs$KaroshibeeReTree.Graph.dataForNode(g, Identity$KaroshibeeReTree.FocusId.create("1")));
+        Jest.test("masterLookupHasCorrectData", (function (param) {
+                return Jest.Expect.toBe(4, Jest.Expect.expect(data.one));
+              }));
+        Jest.test("masterLookupHasCorrectData2", (function (param) {
+                return Jest.Expect.toBe("four", Jest.Expect.expect(data.two));
+              }));
+        var path = Belt_Option.getExn(Graphs$KaroshibeeReTree.Graph.pathFromNode(g, Identity$KaroshibeeReTree.FocusId.create("1")));
+        Jest.test("masterLookupHasPathUp", (function (param) {
+                return Jest.Expect.toBe(true, Jest.Expect.expect(Path$KaroshibeeReTree.Parents.eq(path, Path$KaroshibeeReTree.Parents.fromList(/* [] */0))));
+              }));
+        var g1 = Graphs$KaroshibeeReTree.Graph.addNode(g, Identity$KaroshibeeReTree.FocusId.create("2"), {
+              one: 8,
+              two: "eight"
+            });
+        Jest.test("twoChildAdded", (function (param) {
+                return Jest.Expect.toBe(2, Jest.Expect.expect(Graphs$KaroshibeeReTree.Graph.size(g1)));
+              }));
+        Jest.test("childIsInChildrenCollection", (function (param) {
+                return Jest.Expect.toBe(true, Jest.Expect.expect(Graphs$KaroshibeeReTree.Graph.containsId(g1, Identity$KaroshibeeReTree.FocusId.create("2"))));
+              }));
+        return Jest.test("childIsInMasterLookup", (function (param) {
+                      return Jest.Expect.toBe(true, Jest.Expect.expect(Graphs$KaroshibeeReTree.Graph.containsId(g1, Identity$KaroshibeeReTree.FocusId.create("2"))));
+                    }));
+      }));
+
+Jest.describe("addParentChild", (function (param) {
+        var id = Identity$KaroshibeeReTree.FocusId.create("1");
+        var g = Graphs$KaroshibeeReTree.Graph.addNodeUnder(Graphs$KaroshibeeReTree.Graph.addNodeUnder(Graphs$KaroshibeeReTree.Graph.addNode(Graphs$KaroshibeeReTree.Graph.empty(/* () */0), id, {
+                      one: 4,
+                      two: "four"
+                    }), Identity$KaroshibeeReTree.FocusId.create("2"), {
+                  one: 2,
+                  two: "two"
+                }, Identity$KaroshibeeReTree.ParentId.create("1")), Identity$KaroshibeeReTree.FocusId.create("3"), {
+              one: 1,
+              two: "one"
+            }, Identity$KaroshibeeReTree.ParentId.create("2"));
+        Jest.test("childAdded2", (function (param) {
+                return Jest.Expect.toBe(true, Jest.Expect.expect(Graphs$KaroshibeeReTree.Graph.containsId(g, Identity$KaroshibeeReTree.FocusId.create("2"))));
+              }));
+        Jest.test("childAdded3", (function (param) {
+                return Jest.Expect.toBe(true, Jest.Expect.expect(Graphs$KaroshibeeReTree.Graph.containsId(g, Identity$KaroshibeeReTree.FocusId.create("3"))));
+              }));
+        var data = Belt_Option.getExn(Graphs$KaroshibeeReTree.Graph.dataForNode(g, Identity$KaroshibeeReTree.FocusId.create("2")));
+        Jest.test("masterLookupHasCorrectData", (function (param) {
+                return Jest.Expect.toBe(2, Jest.Expect.expect(data.one));
+              }));
+        Jest.test("masterLookupHasCorrectData2", (function (param) {
+                return Jest.Expect.toBe("two", Jest.Expect.expect(data.two));
+              }));
+        var data$1 = Belt_Option.getExn(Graphs$KaroshibeeReTree.Graph.dataForNode(g, Identity$KaroshibeeReTree.FocusId.create("3")));
+        Jest.test("masterLookupHasCorrectData3", (function (param) {
+                return Jest.Expect.toBe(1, Jest.Expect.expect(data$1.one));
+              }));
+        Jest.test("masterLookupHasCorrectData4", (function (param) {
+                return Jest.Expect.toBe("one", Jest.Expect.expect(data$1.two));
+              }));
+        var path = Belt_Option.getExn(Graphs$KaroshibeeReTree.Graph.pathFromNode(g, Identity$KaroshibeeReTree.FocusId.create("2")));
+        Jest.test("masterLookupHasPathUp", (function (param) {
+                return Jest.Expect.toBe(true, Jest.Expect.expect(Path$KaroshibeeReTree.Parents.eq(path, Path$KaroshibeeReTree.Parents.fromList(/* :: */[
+                                        "1",
+                                        /* [] */0
+                                      ]))));
+              }));
+        var path$1 = Belt_Option.getExn(Graphs$KaroshibeeReTree.Graph.pathFromNode(g, Identity$KaroshibeeReTree.FocusId.create("3")));
+        Jest.test("masterLookupHasPathUp", (function (param) {
+                return Jest.Expect.toBe(true, Jest.Expect.expect(Path$KaroshibeeReTree.Parents.eq(path$1, Path$KaroshibeeReTree.Parents.fromList(/* :: */[
+                                        "2",
+                                        /* :: */[
+                                          "1",
+                                          /* [] */0
+                                        ]
+                                      ]))));
+              }));
+        var t = Belt_Option.getExn(Graphs$KaroshibeeReTree.Graph.subGraphForNode(g, Identity$KaroshibeeReTree.FocusId.create("2")));
+        BrowserLogger.debugWithData("Graph_test-KaroshibeeReTree", "original: " + Graphs$KaroshibeeReTree.Graph.toString(g, (function (d) {
+                    return d.two;
+                  })), /* tuple */[
+              "",
+              ""
+            ]);
+        BrowserLogger.debugWithData("Graph_test-KaroshibeeReTree", "subgraph: " + Graphs$KaroshibeeReTree.Graph.toString(t, (function (d) {
+                    return d.two;
+                  })), /* tuple */[
+              "",
+              ""
+            ]);
+        Jest.test("subtreeHasChild", (function (param) {
+                return Jest.Expect.toBe(2, Jest.Expect.expect(Graphs$KaroshibeeReTree.Graph.size(t)));
+              }));
+        return Jest.test("subtreeHasChild1", (function (param) {
+                      return Jest.Expect.toBe(true, Jest.Expect.expect(Graphs$KaroshibeeReTree.Graph.containsId(t, Identity$KaroshibeeReTree.FocusId.create("3"))));
+                    }));
+      }));
+
+Jest.describe("moveChild", (function (param) {
+        var g = makeGraph(/* () */0);
+        var _test = function (g, s) {
+          return Jest.test("_test", (function (param) {
+                        return Jest.Expect.toBe(true, Jest.Expect.expect(Graphs$KaroshibeeReTree.Graph.containsId(g, Identity$KaroshibeeReTree.FocusId.create(s))));
+                      }));
+        };
+        _test(g, "1");
+        _test(g, "2");
+        _test(g, "3");
+        _test(g, "4");
+        var path = Belt_Option.getExn(Graphs$KaroshibeeReTree.Graph.pathFromNode(g, id4));
+        Jest.test("4PathUp", (function (param) {
+                return Jest.Expect.toBe(true, Jest.Expect.expect(Path$KaroshibeeReTree.Parents.eq(path, Path$KaroshibeeReTree.Parents.fromList(/* :: */[
+                                        "3",
+                                        /* :: */[
+                                          "1",
+                                          /* [] */0
+                                        ]
+                                      ]))));
+              }));
+        var path$1 = Belt_Option.getExn(Graphs$KaroshibeeReTree.Graph.pathFromNode(g, id3));
+        Jest.test("3PathUp", (function (param) {
+                return Jest.Expect.toBe(true, Jest.Expect.expect(Path$KaroshibeeReTree.Parents.eq(path$1, Path$KaroshibeeReTree.Parents.fromList(/* :: */[
+                                        "1",
+                                        /* [] */0
+                                      ]))));
+              }));
+        var path$2 = Belt_Option.getExn(Graphs$KaroshibeeReTree.Graph.pathFromNode(g, id2));
+        Jest.test("2PathUp", (function (param) {
+                return Jest.Expect.toBe(true, Jest.Expect.expect(Path$KaroshibeeReTree.Parents.eq(path$2, Path$KaroshibeeReTree.Parents.fromList(/* :: */[
+                                        "1",
+                                        /* [] */0
+                                      ]))));
+              }));
+        var g1 = Graphs$KaroshibeeReTree.Graph.moveChild(g, Identity$KaroshibeeReTree.convertFocusToChild(id3), Identity$KaroshibeeReTree.convertFocusToParent(id2));
+        Jest.test("notErrored", (function (param) {
+                return Jest.Expect.toBe(true, Jest.Expect.expect(Belt_Result.isOk(g1)));
+              }));
+        var g1$1 = Belt_Result.getExn(g1);
+        _test(g1$1, "1");
+        _test(g1$1, "2");
+        _test(g1$1, "3");
+        _test(g1$1, "4");
+        var path$3 = Belt_Option.getExn(Graphs$KaroshibeeReTree.Graph.pathFromNode(g1$1, id4));
+        Jest.test("4PathUp", (function (param) {
+                return Jest.Expect.toBe(true, Jest.Expect.expect(Path$KaroshibeeReTree.Parents.eq(path$3, Path$KaroshibeeReTree.Parents.fromList(/* :: */[
+                                        "1",
+                                        /* [] */0
+                                      ]))));
+              }));
+        var path$4 = Belt_Option.getExn(Graphs$KaroshibeeReTree.Graph.pathFromNode(g1$1, id3));
+        Jest.test("3PathUp", (function (param) {
+                return Jest.Expect.toBe(true, Jest.Expect.expect(Path$KaroshibeeReTree.Parents.eq(path$4, Path$KaroshibeeReTree.Parents.fromList(/* :: */[
+                                        "2",
+                                        /* :: */[
+                                          "1",
+                                          /* [] */0
+                                        ]
+                                      ]))));
+              }));
+        var path$5 = Belt_Option.getExn(Graphs$KaroshibeeReTree.Graph.pathFromNode(g, id2));
+        return Jest.test("2PathUp", (function (param) {
+                      return Jest.Expect.toBe(true, Jest.Expect.expect(Path$KaroshibeeReTree.Parents.eq(path$5, Path$KaroshibeeReTree.Parents.fromList(/* :: */[
+                                              "1",
+                                              /* [] */0
+                                            ]))));
+                    }));
+      }));
+
+Jest.describe("removeSubtree", (function (param) {
+        var g = makeGraph(/* () */0);
+        var _test = function (g, s, e) {
+          return Jest.test("_test", (function (param) {
+                        return Jest.Expect.toBe(e, Jest.Expect.expect(Graphs$KaroshibeeReTree.Graph.containsId(g, Identity$KaroshibeeReTree.FocusId.create(s))));
+                      }));
+        };
+        _test(g, "1", true);
+        _test(g, "2", true);
+        _test(g, "3", true);
+        _test(g, "4", true);
+        BrowserLogger.debug("Graph_test-KaroshibeeReTree", Path$KaroshibeeReTree.Parents.toString(Belt_Option.getExn(Graphs$KaroshibeeReTree.Graph.pathFromNode(g, id3))));
+        var g1 = Graphs$KaroshibeeReTree.Graph.removeSubtree(g, id3);
+        Jest.test("notErrored", (function (param) {
+                return Jest.Expect.toBe(true, Jest.Expect.expect(Belt_Result.isOk(g1)));
+              }));
+        var g1$1 = Belt_Result.getExn(g1);
+        _test(g1$1, "1", true);
+        _test(g1$1, "2", true);
+        _test(g1$1, "3", false);
+        return _test(g1$1, "4", false);
+      }));
+
+Jest.describe("moveSubtree", (function (param) {
+        var g = makeGraph(/* () */0);
+        var _test = function (g, s) {
+          return Jest.test("_test", (function (param) {
+                        return Jest.Expect.toBe(true, Jest.Expect.expect(Graphs$KaroshibeeReTree.Graph.containsId(g, Identity$KaroshibeeReTree.FocusId.create(s))));
+                      }));
+        };
+        _test(g, "1");
+        _test(g, "2");
+        _test(g, "3");
+        _test(g, "4");
+        var path = Belt_Option.getExn(Graphs$KaroshibeeReTree.Graph.pathFromNode(g, id4));
+        Jest.test("4PathUp", (function (param) {
+                return Jest.Expect.toBe(true, Jest.Expect.expect(Path$KaroshibeeReTree.Parents.eq(path, Path$KaroshibeeReTree.Parents.fromList(/* :: */[
+                                        "3",
+                                        /* :: */[
+                                          "1",
+                                          /* [] */0
+                                        ]
+                                      ]))));
+              }));
+        var path$1 = Belt_Option.getExn(Graphs$KaroshibeeReTree.Graph.pathFromNode(g, id3));
+        Jest.test("3PathUp", (function (param) {
+                return Jest.Expect.toBe(true, Jest.Expect.expect(Path$KaroshibeeReTree.Parents.eq(path$1, Path$KaroshibeeReTree.Parents.fromList(/* :: */[
+                                        "1",
+                                        /* [] */0
+                                      ]))));
+              }));
+        var path$2 = Belt_Option.getExn(Graphs$KaroshibeeReTree.Graph.pathFromNode(g, id2));
+        Jest.test("2PathUp", (function (param) {
+                return Jest.Expect.toBe(true, Jest.Expect.expect(Path$KaroshibeeReTree.Parents.eq(path$2, Path$KaroshibeeReTree.Parents.fromList(/* :: */[
+                                        "1",
+                                        /* [] */0
+                                      ]))));
+              }));
+        var g1 = Graphs$KaroshibeeReTree.Graph.moveSubtree(g, Identity$KaroshibeeReTree.convertFocusToChild(id3), Identity$KaroshibeeReTree.convertFocusToParent(id2));
+        Jest.test("notErrored", (function (param) {
+                return Jest.Expect.toBe(true, Jest.Expect.expect(Belt_Result.isOk(g1)));
+              }));
+        var g1$1 = Belt_Result.getExn(g1);
+        _test(g1$1, "1");
+        _test(g1$1, "2");
+        _test(g1$1, "3");
+        _test(g1$1, "4");
+        var path$3 = Belt_Option.getExn(Graphs$KaroshibeeReTree.Graph.pathFromNode(g1$1, id4));
+        Jest.test("4PathUp_", (function (param) {
+                return Jest.Expect.toBe(true, Jest.Expect.expect(Path$KaroshibeeReTree.Parents.eq(path$3, Path$KaroshibeeReTree.Parents.fromList(/* :: */[
+                                        "3",
+                                        /* :: */[
+                                          "2",
+                                          /* :: */[
+                                            "1",
+                                            /* [] */0
+                                          ]
+                                        ]
+                                      ]))));
+              }));
+        var path$4 = Belt_Option.getExn(Graphs$KaroshibeeReTree.Graph.pathFromNode(g1$1, id3));
+        Jest.test("3PathUp_", (function (param) {
+                return Jest.Expect.toBe(true, Jest.Expect.expect(Path$KaroshibeeReTree.Parents.eq(path$4, Path$KaroshibeeReTree.Parents.fromList(/* :: */[
+                                        "2",
+                                        /* :: */[
+                                          "1",
+                                          /* [] */0
+                                        ]
+                                      ]))));
+              }));
+        var path$5 = Belt_Option.getExn(Graphs$KaroshibeeReTree.Graph.pathFromNode(g, id2));
+        return Jest.test("2PathUp_", (function (param) {
+                      return Jest.Expect.toBe(true, Jest.Expect.expect(Path$KaroshibeeReTree.Parents.eq(path$5, Path$KaroshibeeReTree.Parents.fromList(/* :: */[
+                                              "1",
+                                              /* [] */0
+                                            ]))));
+                    }));
+      }));
+
+Jest.describe("mapping", (function (param) {
+        var g = makeGraph(/* () */0);
+        var g1 = Graphs$KaroshibeeReTree.Graph.map(g, (function (d) {
+                return String(d.one) + (":" + d.two);
+              }));
+        var _test = function (s, ss) {
+          var data = Belt_Option.getExn(Graphs$KaroshibeeReTree.Graph.dataForNode(g1, Identity$KaroshibeeReTree.FocusId.create(s)));
+          return Jest.test("hasCorrectData1", (function (param) {
+                        return Jest.Expect.toBe(ss, Jest.Expect.expect(data));
+                      }));
+        };
+        _test("1", "1:one");
+        _test("2", "2:two");
+        _test("3", "3:three");
+        return _test("4", "4:four");
+      }));
+
+Jest.describe("foreach", (function (param) {
+        var g = makeGraph(/* () */0);
+        var i = {
+          contents: 0
+        };
+        Graphs$KaroshibeeReTree.Graph.forEach(g, (function (_id, _d) {
+                i.contents = i.contents + 1 | 0;
+                return /* () */0;
+              }));
+        return Jest.test("inc", (function (param) {
+                      return Jest.Expect.toBe(4, Jest.Expect.expect(i.contents));
+                    }));
+      }));
+
+Jest.describe("keep", (function (param) {
+        var g = makeGraph(/* () */0);
+        var g1 = Graphs$KaroshibeeReTree.Graph.keep(g, (function (id, d) {
+                if (d.one < 2) {
+                  return true;
+                } else {
+                  return Caml_obj.caml_equal(id, id3);
+                }
+              }));
+        var _test = function (g, s, e) {
+          return Jest.test("_test", (function (param) {
+                        return Jest.Expect.toBe(e, Jest.Expect.expect(Graphs$KaroshibeeReTree.Graph.containsId(g, Identity$KaroshibeeReTree.FocusId.create(s))));
+                      }));
+        };
+        _test(g1, "1", true);
+        _test(g1, "2", false);
+        _test(g1, "3", true);
+        _test(g1, "4", false);
+        var path = Belt_Option.getExn(Graphs$KaroshibeeReTree.Graph.pathFromNode(g1, id3));
+        Jest.test("3PathUp", (function (param) {
+                return Jest.Expect.toBe(true, Jest.Expect.expect(Path$KaroshibeeReTree.Parents.eq(path, Path$KaroshibeeReTree.Parents.fromList(/* :: */[
+                                        "1",
+                                        /* [] */0
+                                      ]))));
+              }));
+        var g2 = Graphs$KaroshibeeReTree.Graph.keep(g, (function (id, d) {
+                if (d.one < 2) {
+                  return true;
+                } else {
+                  return Caml_obj.caml_equal(id, id4);
+                }
+              }));
+        _test(g2, "1", true);
+        _test(g2, "2", false);
+        _test(g2, "3", false);
+        _test(g2, "4", true);
+        var path$1 = Belt_Option.getExn(Graphs$KaroshibeeReTree.Graph.pathFromNode(g2, id4));
+        Jest.test("4PathUp", (function (param) {
+                return Jest.Expect.toBe(true, Jest.Expect.expect(Path$KaroshibeeReTree.Parents.eq(path$1, Path$KaroshibeeReTree.Parents.fromList(/* :: */[
+                                        "1",
+                                        /* [] */0
+                                      ]))));
+              }));
+        var g3 = Graphs$KaroshibeeReTree.Graph.keep(g, (function (_id, d) {
+                return d.one < 4;
+              }));
+        _test(g3, "1", true);
+        _test(g3, "2", true);
+        _test(g3, "3", true);
+        _test(g3, "4", false);
+        var path$2 = Belt_Option.getExn(Graphs$KaroshibeeReTree.Graph.pathFromNode(g3, id2));
+        return Jest.test("2PathUp", (function (param) {
+                      return Jest.Expect.toBe(true, Jest.Expect.expect(Path$KaroshibeeReTree.Parents.eq(path$2, Path$KaroshibeeReTree.Parents.fromList(/* :: */[
+                                              "1",
+                                              /* [] */0
+                                            ]))));
+                    }));
+      }));
 
 Jest.describe("setSubGraphForNode-should-set-subgraph", (function (param) {
         var g = makeGraph(/* () */0);

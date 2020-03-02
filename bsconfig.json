@@ -26,7 +26,8 @@
   "namespace": true,
   "refmt": 3,
   "bs-dependencies": [
-    "bs-log"
+    "bs-log",
+    "@glennsl/bs-json"
   ],
   "bs-dev-dependencies": [
     "@glennsl/bs-jest"

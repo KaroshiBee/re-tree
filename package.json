@@ -18,8 +18,13 @@
   ],
   "author": "simon.parry@karoshibee.com",
   "license": "MIT",
+  "files": [
+    "src/",
+    "bsconfig.json"
+  ],
   "dependencies": {
-    "bs-log": "^1.1.0"
+    "bs-log": "^1.1.0",
+    "@glennsl/bs-json": "^5.0.2"
   },
   "devDependencies": {
     "bs-platform": "^7.0.1",
