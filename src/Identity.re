@@ -43,6 +43,7 @@ module ChildId =
 module ParentId =
   Make({});
 
+// looks like bucklescript converts all these to the id function
 let convertChildToParent = (id: ChildId.t): ParentId.t => {
   id->ChildId.toString->ParentId.create;
 };

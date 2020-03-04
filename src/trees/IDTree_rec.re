@@ -1,7 +1,7 @@
 module I = Identity;
 module ID = I.FocusId;
 module CID = I.ChildId;
-module P = Path.Parents;
+module P = Path.T;
 
 type children = CID.Map.t(t)
 and t = {
@@ -63,19 +63,11 @@ let toString = (tree: t): string => {
   "\n" ++ (_pprint(tree, 2) |> String.concat(""));
 };
 
-let _setChildtreeCont = (subtree, cid, childtree, k) => {
-  let ret = {
-    ...subtree,
-    children: subtree->children->Map.set(cid, childtree),
-  };
-  k(ret);
-};
-
 let addChild = (tree: t, path: P.t, id: ID.t): t => {
   // switch the path so that it goes from root -> node
   let pathFromRoot = path->P.pathFromRoot->List.map(I.convertParentToChild);
 
-  let rec aux = (subtree: t, path: list(CID.t), k): t => {
+  let rec aux = (subtree: t, path: list(CID.t)): t => {
     /* %log.debug */
     /* "looking for home for " ++ id->ID.toString; */
     /* %log.debug */
@@ -97,32 +89,34 @@ let addChild = (tree: t, path: P.t, id: ID.t): t => {
       };
       /* %log.debug */
       /* "returning: " ++ ret->toSummaryString; */
-      k(ret);
+      ret;
     | [cid, ...cids] =>
       /* %log.debug */
       /* "getting children for: " ++ cid->CID.toString; */
       /* %log.debug */
       /* "otherids: " ++ (cids->List.map(CID.toString) |> String.concat(",")); */
-      switch (subtree->children->Map.get(cid)) {
-      | Some(c) =>
-        aux(c, cids, childtree => {
-          _setChildtreeCont(subtree, cid, childtree, k)
-        })
-      | None =>
-        aux(emptySubtree(cid->I.convertChildToFocus), cids, childtree => {
-          _setChildtreeCont(subtree, cid, childtree, k)
-        })
-      }
+      let childtree =
+        switch (subtree->children->Map.get(cid)) {
+        | Some(c) => c->aux(cids)
+        | None => emptySubtree(cid->I.convertChildToFocus)->aux(cids)
+        };
+      let ret = {
+        ...subtree,
+        children: subtree->children->Map.set(cid, childtree),
+      };
+      /* %log.debug */
+      /* "returning: " ++ ret->toSummaryString; */
+      ret;
     };
   };
-  aux(tree, pathFromRoot, x => {x});
+  aux(tree, pathFromRoot);
 };
 
 let removeChild = (tree: t, path: P.t, child: CID.t): t => {
   // switch the path so that it goes from root -> node
   let pathFromRoot = path->P.pathFromRoot->List.map(I.convertParentToChild);
 
-  let rec aux = (subtree: t, path: list(CID.t), k): t => {
+  let rec aux = (subtree: t, path: list(CID.t)): t => {
     /* %log.debug */
     /* "looking for " ++ child->CID.toString; */
     /* %log.debug */
@@ -168,109 +162,82 @@ let removeChild = (tree: t, path: P.t, child: CID.t): t => {
         };
       /* %log.debug */
       /* "returning: " ++ ret->toSummaryString; */
-      k(ret);
+      ret;
 
     | [cid, ...cids] =>
       /* %log.debug */
       /* "getting children for: " ++ cid->CID.toString; */
       /* %log.debug */
       /* "otherids: " ++ (cids->List.map(CID.toString) |> String.concat(",")); */
-      switch (subtree->children->Map.get(cid)) {
-      | Some(c) =>
-        aux(c, cids, childtree => {
-          _setChildtreeCont(subtree, cid, childtree, k)
-        })
-      | None =>
-        let ret = subtree;
-        /* %log.debug */
-        /* "returning: " ++ ret->toSummaryString; */
-        k(ret);
-      }
+      let ret =
+        switch (subtree->children->Map.get(cid)) {
+        | Some(c) => {
+            ...subtree,
+            children: subtree->children->Map.set(cid, c->aux(cids)),
+          }
+
+        | None => subtree
+        };
+      /* %log.debug */
+      /* "returning: " ++ ret->toSummaryString; */
+      ret;
     };
   };
-  aux(tree, pathFromRoot, x => {x});
+  aux(tree, pathFromRoot);
 };
 
-let _getSubtreeAtPath = (subtree: t, path: list(CID.t)): option(t) => {
+let rec _getSubtreeAtPath = (subtree: t, path: list(CID.t)): option(t) => {
   /* %log.debug */
   /* "current subtree: " ++ subtree->toSummaryString; */
   /* %log.debug */
   /* "rest of path: " ++ (path->List.map(CID.toString) |> String.concat(",")); */
-  let rec aux = (subtree, path, k) => {
-    switch (path) {
-    | [] => k(Some(subtree))
-    | [cid, ...cids] =>
-      /* %log.debug */
-      /* "getting children for: " ++ cid->CID.toString; */
-      /* %log.debug */
-      /* "otherids: " ++ (cids->List.map(CID.toString) |> String.concat(",")); */
-      switch (subtree->children->Map.get(cid)) {
-      | Some(c) => aux(c, cids, k)
-      | None => k(None)
-      }
-    };
+  switch (path) {
+  | [] => Some(subtree)
+  | [cid, ...cids] =>
+    /* %log.debug */
+    /* "getting children for: " ++ cid->CID.toString; */
+    /* %log.debug */
+    /* "otherids: " ++ (cids->List.map(CID.toString) |> String.concat(",")); */
+    switch (subtree->children->Map.get(cid)) {
+    | Some(c) => c->_getSubtreeAtPath(cids)
+    | None => None
+    }
   };
-  aux(subtree, path, x => {x});
 };
-// helper function that returns ALL the nodes including the root
-let _get = (subtree: t, path: P.t): CID.Map.t(P.t) => {
-  let rec aux = (id: ID.t, path: P.t, childList: list((CID.t, t)), k) => {
-    [%log.debug "CONT aux called with : " ++ id->ID.toString; ("", "")];
-    [%log.debug "CONT aux called with path: " ++ path->P.toString; ("", "")];
-    switch (childList) {
-    | [] =>
-      let m = CID.Map.make();
-      let ppath = path->P.moveUp;
-      [%log.debug
-        "CONT finished adding: "
-        ++ ppath->P.toString
-        ++ " to "
-        ++ id->ID.toString;
-        ("", "")
-      ];
-      k(m->Map.set(id->I.convertFocusToChild, ppath));
-    /* subtree->isRoot */
-    /*   ? { */
-    /*     [%log.debug "CONT found root"; ("", "")]; */
-    /*     k(m); */
-    /*   } */
-    /*   : { */
-    /*     [%log.debug */
-    /*     "CONT finished not root"; ("","")]; */
-    /*     k(m->Map.set(id->I.convertFocusToChild, path->P.moveUp)); */
-    /*   }; */
-    //base case
-    | [(cid, newsubtree), ...rest] =>
-      //recurse over children
-      [%log.debug "CONT got cid: " ++ cid->CID.toString; ("", "")];
-      aux(
-        cid->I.convertChildToFocus,
-        path->P.append(cid->I.convertChildToParent),
-        newsubtree->children->Map.toList,
-        ret => {
-          [%log.debug "CONT recurse children list: "; ("", "")];
-          [%log.debug
-            "CONT ret map:" ++ ret->Map.size->string_of_int;
-            ("", "")
-          ];
-          aux(
-            id,
-            path,
-            rest,
-            siblings => {
-              [%log.debug "CONT recurse sibling: "; ("", "")];
-              [%log.debug
-                "CONT sibling map:" ++ siblings->Map.size->string_of_int;
-                ("", "")
-              ];
-              k(ret->Map.mergeMany(siblings->Map.toArray));
-            },
-          );
-        },
-      );
-    };
-  };
-  aux(subtree->myId, path, subtree->children->Map.toList, x => {x});
+
+let rec _get =
+        (subtree: t, path: P.t, cids: ref(list((CID.t, P.t))), first: bool) => {
+  let tip = subtree->myId->I.convertFocusToChild;
+  // if it is the root then recurse with the root children
+  // but dont include the root in the final list
+  let tippath =
+    subtree->isRoot
+      ? path : first ? path : path->P.append(tip->I.convertChildToParent);
+  /* if (specialCase) { */
+  /*   (); */
+  /* } else { */
+  /*   let p = tippath->P.moveUp; */
+  /*   /\* [%log.debug *\/ */
+  /*   /\*   "appending onto cids: " *\/ */
+  /*   /\*   ++ tip->CID.toString *\/ */
+  /*   /\*   ++ ", " *\/ */
+  /*   /\*   ++ p->P.toString *\/ */
+  /*   /\*   ++ ", " *\/ */
+  /*   /\*   ++ tippath->P.toString *\/ */
+  /*   /\*   ++ ", " *\/ */
+  /*   /\*   ++ path->P.toString; *\/ */
+  /*   /\*   ("", "") *\/ */
+  /*   /\* ]; *\/ */
+
+  /*   cids := [(tip, p), ...cids^]; */
+  /* }; */
+  let p = tippath->P.moveUp;
+  cids := subtree->isRoot ? cids^ : [(tip, p), ...cids^];
+  subtree
+  ->children
+  ->Map.forEach((_cid, childtree) => {
+      _get(childtree, tippath, cids, false)
+    });
 };
 
 let getChildPaths =
@@ -280,10 +247,9 @@ let getChildPaths =
   switch (tree->_getSubtreeAtPath(pathFromRoot)) {
   | Some(subtree) =>
     //    [%log.debug subtree->toString; ("", "")];
-    let ret =
-      _get(subtree, path)
-      ->Map.remove(_root->I.convertFocusToChild)
-      ->Map.toArray;
+    let cids = ref([]: list((CID.t, P.t)));
+    let _ = _get(subtree, path, cids, true);
+    let ret = (cids^)->List.toArray;
     let tip = subtree->myId->I.convertFocusToChild;
     inclusive ? ret : ret->Array.keep(d => {fst(d) != tip});
   | None => [||]
@@ -320,7 +286,7 @@ let addSubtree = (tree: t, from: ID.t, under: P.t, subtreeToAdd: t): t => {
   let subtreeToAdd =
     subtreeToAdd->isRoot
       ? {...subtreeToAdd, isRoot: false, me: from} : subtreeToAdd;
-  let rec aux = (subtree: t, path: list(CID.t), k): t => {
+  let rec aux = (subtree: t, path: list(CID.t)): t => {
     /* %log.debug */
     /* "looking for home for " ++ id->ID.toString; */
     /* %log.debug */
@@ -343,32 +309,34 @@ let addSubtree = (tree: t, from: ID.t, under: P.t, subtreeToAdd: t): t => {
       };
       /* %log.debug */
       /* "returning: " ++ ret->toSummaryString; */
-      k(ret);
+      ret;
     | [cid, ...cids] =>
       /* %log.debug */
       /* "getting children for: " ++ cid->CID.toString; */
       /* %log.debug */
       /* "otherids: " ++ (cids->List.map(CID.toString) |> String.concat(",")); */
-      switch (subtree->children->Map.get(cid)) {
-      | Some(c) =>
-        aux(c, cids, childtree => {
-          _setChildtreeCont(subtree, cid, childtree, k)
-        })
-      | None =>
-        aux(emptySubtree(cid->I.convertChildToFocus), cids, childtree => {
-          _setChildtreeCont(subtree, cid, childtree, k)
-        })
-      }
+      let childtree =
+        switch (subtree->children->Map.get(cid)) {
+        | Some(c) => c->aux(cids)
+        | None => emptySubtree(cid->I.convertChildToFocus)->aux(cids)
+        };
+      let ret = {
+        ...subtree,
+        children: subtree->children->Map.set(cid, childtree),
+      };
+      /* %log.debug */
+      /* "returning: " ++ ret->toSummaryString; */
+      ret;
     };
   };
-  aux(tree, pathFromRoot, x => {x});
+  aux(tree, pathFromRoot);
 };
 
 let removeSubtree = (tree: t, path: P.t, child: CID.t): t => {
   // switch the path so that it goes from root -> node
   let pathFromRoot = path->P.pathFromRoot->List.map(I.convertParentToChild);
 
-  let rec aux = (subtree: t, path: list(CID.t), k): t => {
+  let rec aux = (subtree: t, path: list(CID.t)): t => {
     /* %log.debug */
     /* "looking for " ++ child->CID.toString; */
     /* %log.debug */
@@ -376,20 +344,25 @@ let removeSubtree = (tree: t, path: P.t, child: CID.t): t => {
     /* %log.debug */
     /* "rest of path: " ++ (path->List.map(CID.toString) |> String.concat(",")); */
     switch (path) {
-    | [] => k({...subtree, children: subtree->children->Map.remove(child)})
+    | [] => {...subtree, children: subtree->children->Map.remove(child)}
     | [cid, ...cids] =>
       /* %log.debug */
       /* "getting children for: " ++ cid->CID.toString; */
       /* %log.debug */
       /* "otherids: " ++ (cids->List.map(CID.toString) |> String.concat(",")); */
-      switch (subtree->children->Map.get(cid)) {
-      | Some(c) =>
-        aux(c, cids, childtree => {
-          _setChildtreeCont(subtree, cid, childtree, k)
-        })
-      | None => k(subtree)
-      }
+      let childtree =
+        switch (subtree->children->Map.get(cid)) {
+        | Some(c) => c->aux(cids)
+        | None => subtree
+        };
+      let ret = {
+        ...subtree,
+        children: subtree->children->Map.set(cid, childtree),
+      };
+      /* %log.debug */
+      /* "returning: " ++ ret->toSummaryString; */
+      ret;
     };
   };
-  aux(tree, pathFromRoot, x => {x});
+  aux(tree, pathFromRoot);
 };

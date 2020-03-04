@@ -4,7 +4,7 @@ module I = Identity;
 module ID = I.FocusId;
 module CID = I.ChildId;
 module PID = I.ParentId;
-module P = Path.Parents;
+module P = Path.T;
 
 describe("canMakeEmpty", () => {
   open Expect;

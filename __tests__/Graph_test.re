@@ -1,10 +1,10 @@
 open Jest;
-module M = Graphs.Graph;
+module M = Graph.T;
 module I = Identity;
 module ID = I.FocusId;
 module CID = I.ChildId;
 module PID = I.ParentId;
-module P = Path.Parents;
+module P = Path.T;
 
 type data = {
   one: int,
