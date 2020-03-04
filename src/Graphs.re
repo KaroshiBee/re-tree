@@ -113,45 +113,45 @@ module Graph: GRAPH = {
     | Some(path) =>
       switch (graph.tree->IDTree.getSubtree(path, id)) {
       | Some(tree) =>
-        [%log.debug
-          "subgraphfornode tree: " ++ tree->IDTree.toString;
-          ("", "")
-        ];
+        /* [%log.debug */
+        /*   "subgraphfornode tree: " ++ tree->IDTree.toString; */
+        /*   ("", "") */
+        /* ]; */
         let allIds = graph.masterLookup->Map.keysToArray; //;
-        [%log.debug
-          "all ids: "
-          ++ (
-            allIds->Array.map(cid => cid->ID.toString)->List.fromArray
-            |> String.concat(",")
-          );
-          ("", "")
-        ];
+        /* [%log.debug */
+        /*   "all ids: " */
+        /*   ++ ( */
+        /*     allIds->Array.map(cid => cid->ID.toString)->List.fromArray */
+        /*     |> String.concat(",") */
+        /*   ); */
+        /*   ("", "") */
+        /* ]; */
         let ids = tree->IDTree.getAllIds;
-        [%log.debug
-          "to keep: "
-          ++ (
-            ids->Array.map(cid => cid->CID.toString)->List.fromArray
-            |> String.concat(",")
-          );
-          ("", "")
-        ];
+        /* [%log.debug */
+        /*   "to keep: " */
+        /*   ++ ( */
+        /*     ids->Array.map(cid => cid->CID.toString)->List.fromArray */
+        /*     |> String.concat(",") */
+        /*   ); */
+        /*   ("", "") */
+        /* ]; */
         let toKeep = ids->Array.map(I.convertChildToFocus)->ID.Set.fromArray;
         let cids = allIds->ID.Set.fromArray->Set.diff(toKeep)->Set.toArray;
-        [%log.debug
-          "to remove: "
-          ++ (
-            cids->Array.map(cid => cid->ID.toString)->List.fromArray
-            |> String.concat(",")
-          );
-          ("", "")
-        ];
+        /* [%log.debug */
+        /*   "to remove: " */
+        /*   ++ ( */
+        /*     cids->Array.map(cid => cid->ID.toString)->List.fromArray */
+        /*     |> String.concat(",") */
+        /*   ); */
+        /*   ("", "") */
+        /* ]; */
         // remove these from graph
         let masterLookup = graph.masterLookup->Map.removeMany(cids);
         let ret = {masterLookup, tree};
-        [%log.debug
-          "subGraphForNode returning: " ++ ret->toString(_ => "");
-          ("", "")
-        ];
+        /* [%log.debug */
+        /*   "subGraphForNode returning: " ++ ret->toString(_ => ""); */
+        /*   ("", "") */
+        /* ]; */
         Some(ret);
       | None => None
       }
@@ -187,7 +187,6 @@ module Graph: GRAPH = {
       // first need to find its path in the tree
       switch (graph->pathFromNode(id)) {
       | Some(path) =>
-        [%log.debug "boo"; ("", "")];
         /* %log.debug */
         /* "removeNode:" ++ id->ID.toString; */
         /* %log.debug */
@@ -281,29 +280,29 @@ module Graph: GRAPH = {
 
   let setSubGraphForNode =
       (graph: t('a), id: ID.t, subgraph: t('a)): Result.t(t('a), string) => {
-    [%log.debug "setSubGraphForNode: " ++ id->ID.toString; ("", "")];
-    [%log.debug "input graph:" ++ graph->toString(d => "unknown"); ("", "")];
-    [%log.debug
-      "adding subgraph:" ++ subgraph->toString(d => "unknown");
-      ("", "")
-    ];
-    [%log.debug "under:" ++ id->ID.toString; ("", "")];
+    /* [%log.debug "setSubGraphForNode: " ++ id->ID.toString; ("", "")]; */
+    /* [%log.debug "input graph:" ++ graph->toString(_d => "unknown"); ("", "")]; */
+    /* [%log.debug */
+    /*   "adding subgraph:" ++ subgraph->toString(_d => "unknown"); */
+    /*   ("", "") */
+    /* ]; */
+    /* [%log.debug "under:" ++ id->ID.toString; ("", "")]; */
     let masterLookup = graph.masterLookup;
     switch (graph->pathFromNode(id)) {
     | Some(pathUp) =>
-      [%log.debug "got pathUp: " ++ pathUp->P.toString; ("", "")];
+      /* [%log.debug "got pathUp: " ++ pathUp->P.toString; ("", "")]; */
       graph
       ->removeSubtree(id)
       ->Result.flatMap(graph => {
-          [%log.debug "removed subtree at: " ++ id->ID.toString; ("", "")];
-          [%log.debug graph->toString(d => "unknown"); ("", "")];
+          /* [%log.debug "removed subtree at: " ++ id->ID.toString; ("", "")]; */
+          /* [%log.debug graph->toString(_d => "unknown"); ("", "")]; */
 
           let tree = graph.tree->IDTree.addSubtree(id, pathUp, subgraph.tree);
-          [%log.debug "got tree: " ++ tree->IDTree.toString; ("", "")];
+          /* [%log.debug "got tree: " ++ tree->IDTree.toString; ("", "")]; */
 
           // know pid already exist
           let pidPathUp = pathUp->P.append(id->I.convertFocusToParent);
-          [%log.debug "got pid pathUp: " ++ pidPathUp->P.toString; ("", "")];
+          /* [%log.debug "got pid pathUp: " ++ pidPathUp->P.toString; ("", "")]; */
 
           let toMerge =
             tree
@@ -311,10 +310,10 @@ module Graph: GRAPH = {
             ->Array.map(d => {
                 let i = fst(d)->I.convertChildToFocus;
                 let pth = snd(d);
-                [%log.debug
-                  "got i: " ++ i->ID.toString ++ " - " ++ pth->P.toString;
-                  ("", "")
-                ];
+                /* [%log.debug */
+                /*   "got i: " ++ i->ID.toString ++ " - " ++ pth->P.toString; */
+                /*   ("", "") */
+                /* ]; */
                 // if the subgraph lookup doesnt have the dataForNode
                 // then hope it is on the original lookup
                 switch (subgraph.masterLookup->Map.get(i)) {
@@ -329,12 +328,12 @@ module Graph: GRAPH = {
             masterLookup: graph.masterLookup->Map.mergeMany(toMerge),
             tree,
           };
-          [%log.debug
-            "setSubGraphForNode returning: " ++ ret->toString(_ => "");
-            ("", "")
-          ];
+          /* [%log.debug */
+          /*   "setSubGraphForNode returning: " ++ ret->toString(_ => ""); */
+          /*   ("", "") */
+          /* ]; */
           Result.Ok(ret);
-        });
+        })
     | None =>
       [%log.debug "didn't get pathUp for id: " ++ id->ID.toString; ("", "")];
       Result.Ok(graph);
@@ -404,7 +403,7 @@ module Graph: GRAPH = {
         ->Array.map(I.convertChildToFocus)
         ->Array.map(id => {
             let d = subgraph.masterLookup->Map.getExn(id);
-            [%log.debug "got id: " ++ id->ID.toString; ("", "")];
+            /* [%log.debug "got id: " ++ id->ID.toString; ("", "")]; */
             (id, {...d, value: f(d.value)});
           });
 

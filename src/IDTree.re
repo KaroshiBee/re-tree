@@ -169,15 +169,15 @@ let removeChild = (tree: t, path: P.t, child: CID.t): t => {
       /* "getting children for: " ++ cid->CID.toString; */
       /* %log.debug */
       /* "otherids: " ++ (cids->List.map(CID.toString) |> String.concat(",")); */
-      let childtree =
+      let ret =
         switch (subtree->children->Map.get(cid)) {
-        | Some(c) => c->aux(cids)
+        | Some(c) => {
+            ...subtree,
+            children: subtree->children->Map.set(cid, c->aux(cids)),
+          }
+
         | None => subtree
         };
-      let ret = {
-        ...subtree,
-        children: subtree->children->Map.set(cid, childtree),
-      };
       /* %log.debug */
       /* "returning: " ++ ret->toSummaryString; */
       ret;

@@ -21,7 +21,7 @@
     "-open Belt"
   ],
   "warnings": {
-    "error": "+101"
+    "error": "+8+101"
   },
   "namespace": true,
   "refmt": 3,
