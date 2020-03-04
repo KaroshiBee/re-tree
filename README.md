@@ -1,6 +1,6 @@
 # re-tree
 
-A parent/child tree inspired by Atlassian ToolKit Tree
+A parent/child tree inspired by Atlassian ToolKit Tree (c.f. https://atlaskit.atlassian.com/packages/core/tree/example/drag_and_drop_with_nesting)
 
 # Build + Watch
 
