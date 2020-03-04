@@ -1,5 +1,5 @@
 open Jest;
-module M = IDTree;
+module M = IDTree_rec;
 module I = Identity;
 module ID = I.FocusId;
 module CID = I.ChildId;
@@ -636,8 +636,8 @@ describe("subtrees", () => {
   });
 
   test("gotSubtreeIds", () => {
-    [%log.debug "t1:" ++ t1->IDTree.toString; ("", "")];
-    let cids = t1->IDTree.getAllIds;
+    [%log.debug "t1:" ++ t1->M.toString; ("", "")];
+    let cids = t1->M.getAllIds;
     expect(cids->Array.size) |> toBe(2);
   });
 
