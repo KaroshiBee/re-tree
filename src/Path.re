@@ -4,6 +4,7 @@ module type PATH = {
   type el;
   type t;
   let empty: unit => t;
+  let size: t => int;
   let fromList: list(string) => t;
   let fromPathToRootList: list(string) => t;
   let fromRootToPathList: list(string) => t;

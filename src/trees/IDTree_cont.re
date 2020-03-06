@@ -215,19 +215,19 @@ let _getSubtreeAtPath = (subtree: t, path: list(CID.t)): option(t) => {
 // helper function that returns ALL the nodes including the root
 let _get = (subtree: t, path: P.t): CID.Map.t(P.t) => {
   let rec aux = (id: ID.t, path: P.t, childList: list((CID.t, t)), k) => {
-    [%log.debug "CONT aux called with : " ++ id->ID.toString; ("", "")];
-    [%log.debug "CONT aux called with path: " ++ path->P.toString; ("", "")];
+    /* [%log.debug "CONT aux called with : " ++ id->ID.toString; ("", "")]; */
+    /* [%log.debug "CONT aux called with path: " ++ path->P.toString; ("", "")]; */
     switch (childList) {
     | [] =>
       let m = CID.Map.make();
       let ppath = path->P.moveUp;
-      [%log.debug
-        "CONT finished adding: "
-        ++ ppath->P.toString
-        ++ " to "
-        ++ id->ID.toString;
-        ("", "")
-      ];
+      /* [%log.debug */
+      /*   "CONT finished adding: " */
+      /*   ++ ppath->P.toString */
+      /*   ++ " to " */
+      /*   ++ id->ID.toString; */
+      /*   ("", "") */
+      /* ]; */
       k(m->Map.set(id->I.convertFocusToChild, ppath));
     /* subtree->isRoot */
     /*   ? { */
@@ -241,33 +241,29 @@ let _get = (subtree: t, path: P.t): CID.Map.t(P.t) => {
     /*   }; */
     //base case
     | [(cid, newsubtree), ...rest] =>
-      //recurse over children
-      [%log.debug "CONT got cid: " ++ cid->CID.toString; ("", "")];
+      /* [%log.debug "CONT got cid: " ++ cid->CID.toString; ("", "")]; */
       aux(
         cid->I.convertChildToFocus,
         path->P.append(cid->I.convertChildToParent),
         newsubtree->children->Map.toList,
         ret => {
-          [%log.debug "CONT recurse children list: "; ("", "")];
-          [%log.debug
-            "CONT ret map:" ++ ret->Map.size->string_of_int;
-            ("", "")
-          ];
-          aux(
-            id,
-            path,
-            rest,
-            siblings => {
-              [%log.debug "CONT recurse sibling: "; ("", "")];
-              [%log.debug
-                "CONT sibling map:" ++ siblings->Map.size->string_of_int;
-                ("", "")
-              ];
-              k(ret->Map.mergeMany(siblings->Map.toArray));
-            },
-          );
-        },
-      );
+        /* [%log.debug "CONT recurse children list: "; ("", "")]; */
+        /* [%log.debug */
+        /*   "CONT ret map:" ++ ret->Map.size->string_of_int; */
+        /*   ("", "") */
+        /* ]; */
+        aux(id, path, rest, siblings => {
+          /* [%log.debug "CONT recurse sibling: "; ("", "")]; */
+          /* [%log.debug */
+          /*   "CONT sibling map:" ++ siblings->Map.size->string_of_int; */
+          /*   ("", "") */
+          /* ]; */
+          k(
+            ret->Map.mergeMany(siblings->Map.toArray),
+          )
+        })
+      })
+      //recurse over children
     };
   };
   aux(subtree->myId, path, subtree->children->Map.toList, x => {x});

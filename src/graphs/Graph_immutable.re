@@ -52,6 +52,10 @@ let hasChildren = graph => {
   graph.tree->IDTree.hasChildren;
 };
 
+let numberChildren = graph => {
+  graph.tree->IDTree.children->Map.keysToArray->Array.size;
+};
+
 let containsId = (graph: t('a), id: ID.t): bool => {
   graph.masterLookup->Map.has(id);
 };
@@ -70,6 +74,17 @@ let pathFromNode = (graph: t('a), id: ID.t): option(P.t) => {
 
 let dataForNode = (graph: t('a), id: ID.t): option('a) =>
   graph->fullDataFromNode(id)->Option.map(d => d.value);
+
+let depth = (graph: t('a), id: ID.t): int => {
+  graph->pathFromNode(id)->Option.map(P.size)->Option.getWithDefault(0);
+};
+
+let maxDepth = (graph: t('a), id: ID.t): int => {
+  graph.masterLookup
+  ->Map.reduce(0, (acc, _ky, dataWithPath) => {
+      max(acc, dataWithPath.pathUp->P.size)
+    });
+};
 
 let setDataForNode = (graph: t('a), id: ID.t, f: 'a => 'a): t('a) =>
   switch (graph->fullDataFromNode(id)) {
@@ -430,6 +445,12 @@ let keep = (graph: t('a), f: (ID.t, 'a) => bool): t('a) => {
   {masterLookup, tree};
 };
 
+let toKeyValueArray = (graph: t('a)): array((ID.t, 'a)) => {
+  graph.masterLookup
+  ->Map.toArray
+  ->Array.map(kv => (fst(kv), (snd(kv): dataWithPath('a)).value));
+};
+
 let toArray = (graph: t('a)): array('a) => {
-  graph.masterLookup->Map.toArray->Array.map(d => snd(d).value);
+  graph->toKeyValueArray->Array.map(d => snd(d));
 };

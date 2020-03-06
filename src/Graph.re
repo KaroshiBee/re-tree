@@ -12,9 +12,12 @@ module type GRAPH = {
   let toString: (t('a), 'a => string) => string;
   let size: t('a) => int;
   let hasChildren: t('a) => bool;
+  let numberChildren: t('a) => int;
   let containsId: (t('a), ID.t) => bool;
   let pathFromNode: (t('a), ID.t) => option(P.t);
   let dataForNode: (t('a), ID.t) => option('a);
+  let depth: (t('a), ID.t) => int;
+  let maxDepth: (t('a), ID.t) => int;
   let setDataForNode: (t('a), ID.t, 'a => 'a) => t('a);
   let subGraphForNode: (t('a), ID.t) => option(t('a));
   let addNodeAtPath: (t('a), ID.t, 'a, P.t) => t('a);
@@ -30,6 +33,7 @@ module type GRAPH = {
   let forEach: (t('a), (ID.t, 'a) => unit) => unit;
   let keep: (t('a), (ID.t, 'a) => bool) => t('a);
   let toArray: t('a) => array('a);
+  let toKeyValueArray: t('a) => array((ID.t, 'a));
 };
 
 module T: GRAPH = {

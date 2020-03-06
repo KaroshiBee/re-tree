@@ -4,6 +4,7 @@ type el = PID.t;
 type t = {pathUp: list(el)};
 
 let empty = () => {pathUp: []};
+let size = path => path.pathUp->List.size;
 let fromList = path => {pathUp: path->List.map(s => PID.create(s))};
 let fromPathToRootList = fromList;
 let fromRootToPathList = path => path->List.reverse->fromList;
