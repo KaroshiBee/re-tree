@@ -17,7 +17,7 @@ module type GRAPH = {
   let pathFromNode: (t('a), ID.t) => option(P.t);
   let dataForNode: (t('a), ID.t) => option('a);
   let depth: (t('a), ID.t) => int;
-  let maxDepth: (t('a), ID.t) => int;
+  let maxDepth: t('a) => int;
   let setDataForNode: (t('a), ID.t, 'a => 'a) => t('a);
   let subGraphForNode: (t('a), ID.t) => option(t('a));
   let addNodeAtPath: (t('a), ID.t, 'a, P.t) => t('a);
