@@ -6,3 +6,6 @@ npm-debug.log
 /node_modules/
 /coverage/
 *.bs.js
+*-checkpoint.ipynb
+/__hypothesis__/__pycache__/
+/__pycache__/
