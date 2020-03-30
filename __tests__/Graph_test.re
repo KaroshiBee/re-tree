@@ -397,7 +397,7 @@ describe("setSubGraphForNode-should-set-subgraph", () => {
   };
 });
 
-describe("updteChildren-should-update", () => {
+describe("updteChildren-should-update-only-children", () => {
   open Expect;
 
   let _test = (g, n, vl) => {
@@ -427,4 +427,11 @@ describe("updteChildren-should-update", () => {
   _test(g2, "2", 2);
   _test(g2, "3", 3);
   _test(g2, "4", 4);
+
+  let g3 = g->M.updateChildren(ID.create("3"), d => {...d, one: 200});
+
+  _test(g3, "1", 1);
+  _test(g3, "2", 2);
+  _test(g3, "3", 3);
+  _test(g3, "4", 200);
 });
