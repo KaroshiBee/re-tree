@@ -12,7 +12,7 @@
     "clean:dist": "rm -rf dist",
     "coverage": "nyc report --temp-directory=coverage --reporter=text-lcov | coveralls",
     "test": "yarn run build:bs:dev && jest --coverage",
-    "fastcheck": "./node_modules/.bin/mocha __tests__/*fastcheck.bs.js"
+    "fastcheck": "./node_modules/.bin/mocha __tests__/*fastcheck.bs.js --watch"
   },
   "keywords": [
     "BuckleScript"
