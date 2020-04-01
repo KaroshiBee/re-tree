@@ -39,12 +39,31 @@ module Arbitrary = {
             )
           );
       });
+
+  // generate fingery trees - lots of straight down deep branches
+  // NOTE i dont mean finger-trees
+  let fingersN = n =>
+    tuple2(
+      IDs.id,
+      arrayWithLength(arrayWithLength(IDs.idString, 1, 10), 1, 10),
+    )
+    ->Derive.map(tup => {
+        let id = tup->fst;
+        let ls = tup->snd;
+        ls->Array.reduce(
+          M.empty(),
+          (t, arrPath) => {
+            let pth = P.fromRootToPathList(arrPath->List.fromArray);
+            t->M.addChild(pth, id);
+          },
+        );
+      });
 };
 
 describe("construction", () => {
   it("constructs", () => {
     assertProperty1(
-      Arbitrary.depth2,
+      Arbitrary.fingersN(4),
       t => {
         [%log.debug t->M.toString; ("", "")];
         t->M.getAllIds->Array.size > 0;
