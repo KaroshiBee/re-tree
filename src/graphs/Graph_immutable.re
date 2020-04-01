@@ -72,6 +72,10 @@ let pathFromNode = (graph: t('a), id: ID.t): option(P.t) => {
   graph->fullDataFromNode(id)->Option.map(d => d.pathUp);
 };
 
+let parentId = (graph: t('a), id: ID.t): option(PID.t) => {
+  graph->pathFromNode(id)->Option.flatMap(d => d->P.parent);
+};
+
 let dataForNode = (graph: t('a), id: ID.t): option('a) =>
   graph->fullDataFromNode(id)->Option.map(d => d.value);
 
@@ -146,6 +150,24 @@ let subGraphForNode = (graph: t('a), id: ID.t): option(t('a)) => {
 
   | None => None
   };
+};
+
+let childrenOfRoot = (graph: t('a)): list(t('a)) => {
+  [%log.debug "childrenOfRoot"; ("", "")];
+  graph.tree->IDTree.isRoot
+    ? {
+      [%log.debug "is root"; ("", "")];
+      graph.tree
+      ->IDTree.children
+      ->Map.keysToArray
+      ->Array.reduce([], (trees, cid) => {
+          switch (graph->subGraphForNode(cid->I.convertChildToFocus)) {
+          | Some(t) => [t, ...trees]
+          | None => trees
+          }
+        });
+    }
+    : [];
 };
 
 let addNodeAtPath = (graph: t('a), id: ID.t, data: 'a, path: P.t): t('a) => {
@@ -267,65 +289,113 @@ let removeSubtree = (graph: t('a), id: ID.t): Result.t(t('a), string) =>
   };
 
 let setSubGraphForNode =
-    (graph: t('a), id: ID.t, subgraph: t('a)): Result.t(t('a), string) => {
-  /* [%log.debug "setSubGraphForNode: " ++ id->ID.toString; ("", "")]; */
-  /* [%log.debug "input graph:" ++ graph->toString(_d => "unknown"); ("", "")]; */
-  /* [%log.debug */
-  /*   "adding subgraph:" ++ subgraph->toString(_d => "unknown"); */
-  /*   ("", "") */
-  /* ]; */
-  /* [%log.debug "under:" ++ id->ID.toString; ("", "")]; */
+    (graph: t('a), pid: PID.t, id: ID.t, subgraph: t('a))
+    : Result.t(t('a), string) => {
+  [%log.debug "setSubGraphForNode: " ++ id->ID.toString; ("", "")];
+  [%log.debug "input graph:" ++ graph->toString(_d => "unknown"); ("", "")];
+  [%log.debug
+    "adding subgraph:" ++ subgraph->toString(_d => "unknown");
+    ("", "")
+  ];
+  [%log.debug "under:" ++ pid->PID.toString; ("", "")];
   let masterLookup = graph.masterLookup;
-  switch (graph->pathFromNode(id)) {
+  switch (graph->pathFromNode(pid->I.convertParentToFocus)) {
   | Some(pathUp) =>
-    /* [%log.debug "got pathUp: " ++ pathUp->P.toString; ("", "")]; */
-    graph
-    ->removeSubtree(id)
-    ->Result.flatMap(graph => {
-        /* [%log.debug "removed subtree at: " ++ id->ID.toString; ("", "")]; */
-        /* [%log.debug graph->toString(_d => "unknown"); ("", "")]; */
+    let pathUp = pathUp->P.append(pid);
+    [%log.debug "got pathUp: " ++ pathUp->P.toString; ("", "")];
+    let g =
+      graph->containsId(id) ? graph->removeSubtree(id) : graph->Result.Ok;
+    g->Result.flatMap(graph => {
+      /* [%log.debug "removed subtree at: " ++ id->ID.toString; ("", "")]; */
+      [%log.debug graph->toString(_d => "unknown"); ("", "")];
 
-        let tree = graph.tree->IDTree.addSubtree(id, pathUp, subgraph.tree);
-        /* [%log.debug "got tree: " ++ tree->IDTree.toString; ("", "")]; */
+      let tree = graph.tree->IDTree.addSubtree(id, pathUp, subgraph.tree);
+      [%log.debug "got tree: " ++ tree->IDTree.toString; ("", "")];
 
-        // know pid already exist
-        let pidPathUp = pathUp->P.append(id->I.convertFocusToParent);
-        /* [%log.debug "got pid pathUp: " ++ pidPathUp->P.toString; ("", "")]; */
+      // know pid already exist
+      let pidPathUp = pathUp; //->P.append(id->I.convertFocusToParent);
+      [%log.debug "got pid pathUp: " ++ pidPathUp->P.toString; ("", "")];
 
-        let toMerge =
-          tree
-          ->IDTree.getChildPaths(pidPathUp, true) // include the original parent ID in this
-          ->Array.map(d => {
-              let i = fst(d)->I.convertChildToFocus;
-              let pth = snd(d);
-              /* [%log.debug */
-              /*   "got i: " ++ i->ID.toString ++ " - " ++ pth->P.toString; */
-              /*   ("", "") */
-              /* ]; */
-              // if the subgraph lookup doesnt have the dataForNode
-              // then hope it is on the original lookup
-              switch (subgraph.masterLookup->Map.get(i)) {
-              | Some(dataWithPath) => (i, {...dataWithPath, pathUp: pth})
-              | None =>
-                let dataWithPath = masterLookup->Map.getExn(i);
-                (i, {...dataWithPath, pathUp: pth});
-              };
-            });
+      let toMerge =
+        tree
+        ->IDTree.getChildPaths(pidPathUp, true) // include the original parent ID in this
+        ->Array.map(d => {
+            let i = fst(d)->I.convertChildToFocus;
+            let pth = snd(d);
+            [%log.debug
+              "got i: " ++ i->ID.toString ++ " - " ++ pth->P.toString;
+              ("", "")
+            ];
+            // if the subgraph lookup doesnt have the dataForNode
+            // then hope it is on the original lookup
+            switch (subgraph.masterLookup->Map.get(i)) {
+            | Some(dataWithPath) => (i, {...dataWithPath, pathUp: pth})
+            | None =>
+              let dataWithPath = masterLookup->Map.getExn(i);
+              (i, {...dataWithPath, pathUp: pth});
+            };
+          });
 
-        let ret = {
-          masterLookup: graph.masterLookup->Map.mergeMany(toMerge),
-          tree,
-        };
-        /* [%log.debug */
-        /*   "setSubGraphForNode returning: " ++ ret->toString(_ => ""); */
-        /*   ("", "") */
-        /* ]; */
-        Result.Ok(ret);
-      })
+      let ret = {
+        masterLookup: graph.masterLookup->Map.mergeMany(toMerge),
+        tree,
+      };
+      [%log.debug
+        "setSubGraphForNode returning: " ++ ret->toString(_ => "");
+        ("", "")
+      ];
+      Result.Ok(ret);
+    });
   | None =>
     [%log.debug "didn't get pathUp for id: " ++ id->ID.toString; ("", "")];
     Result.Ok(graph);
   };
+};
+
+let setSubGraphForRoot =
+    (graph: t('a), id: ID.t, subgraph: t('a)): Result.t(t('a), string) => {
+  [%log.debug "setSubGraphForRoot: " ++ id->ID.toString; ("", "")];
+  [%log.debug "input graph:" ++ graph->toString(_d => "unknown"); ("", "")];
+  [%log.debug
+    "adding subgraph:" ++ subgraph->toString(_d => "unknown");
+    ("", "")
+  ];
+
+  let masterLookup = graph.masterLookup;
+  let pathUp = P.empty();
+  let tree = graph.tree->IDTree.addSubtree(id, pathUp, subgraph.tree);
+  [%log.debug "got tree: " ++ tree->IDTree.toString; ("", "")];
+
+  // know pid already exist
+  let pidPathUp = pathUp->P.append(id->I.convertFocusToParent);
+  [%log.debug "got pid pathUp: " ++ pidPathUp->P.toString; ("", "")];
+
+  let toMerge =
+    tree
+    ->IDTree.getChildPaths(pidPathUp, true) // include the original parent ID in this
+    ->Array.map(d => {
+        let i = fst(d)->I.convertChildToFocus;
+        let pth = snd(d);
+        [%log.debug
+          "got i: " ++ i->ID.toString ++ " - " ++ pth->P.toString;
+          ("", "")
+        ];
+        // if the subgraph lookup doesnt have the dataForNode
+        // then hope it is on the original lookup
+        switch (subgraph.masterLookup->Map.get(i)) {
+        | Some(dataWithPath) => (i, {...dataWithPath, pathUp: pth})
+        | None =>
+          let dataWithPath = masterLookup->Map.getExn(i);
+          (i, {...dataWithPath, pathUp: pth});
+        };
+      });
+
+  let ret = {masterLookup: graph.masterLookup->Map.mergeMany(toMerge), tree};
+  [%log.debug
+    "setSubGraphForRoot returning: " ++ ret->toString(_ => "");
+    ("", "")
+  ];
+  Result.Ok(ret);
 };
 
 let moveSubtree = (graph: t('a), from: CID.t, under: PID.t) => {

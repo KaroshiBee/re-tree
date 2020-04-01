@@ -366,3 +366,17 @@ let removeSubtree = (tree: t, path: P.t, child: CID.t): t => {
   };
   aux(tree, pathFromRoot);
 };
+
+let eq = (expected, actual) => {
+  let eIds = expected->getAllPaths->SortArray.stableSortBy( (x, y) => {
+    compare(x->fst->CID.toString, y->fst->CID.toString)
+  });
+  let aIds = actual->getAllPaths->SortArray.stableSortBy( (x, y) => {
+    compare(x->fst->CID.toString, y->fst->CID.toString)
+  });
+  eIds->Array.eq(aIds, (x, y) => {
+    x->fst->CID.toString == y->fst->CID.toString &&
+      x->snd->P.eq(y->snd);
+  });
+};
+

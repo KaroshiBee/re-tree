@@ -5,9 +5,16 @@ module Make = (()) => {
     let toString: t => string;
   };
   module Id: Id_t = {
+    exception Empty_id;
     type t = string;
 
-    let create = (id: string) => id;
+    let create = (id: string) =>
+      id->String.length > 0
+        ? id
+        : {
+          raise(Empty_id);
+          id;
+        };
     let toString = s => s;
   };
 

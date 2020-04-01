@@ -15,18 +15,22 @@ module type GRAPH = {
   let numberChildren: t('a) => int;
   let containsId: (t('a), ID.t) => bool;
   let pathFromNode: (t('a), ID.t) => option(P.t);
+  let parentId: (t('a), ID.t) => option(PID.t);
   let dataForNode: (t('a), ID.t) => option('a);
   let depth: (t('a), ID.t) => int;
   let maxDepth: (t('a), ID.t) => int;
   let setDataForNode: (t('a), ID.t, 'a => 'a) => t('a);
   let subGraphForNode: (t('a), ID.t) => option(t('a));
+  let childrenOfRoot: t('a) => list(t('a));
   let addNodeAtPath: (t('a), ID.t, 'a, P.t) => t('a);
   let addNode: (t('a), ID.t, 'a) => t('a);
   let addNodeUnder: (t('a), ID.t, 'a, PID.t) => t('a);
   let removeNode: (t('a), ID.t) => Result.t(t('a), string);
   let moveChild: (t('a), CID.t, PID.t) => Result.t(t('a), string);
   let removeSubtree: (t('a), ID.t) => Result.t(t('a), string);
-  let setSubGraphForNode: (t('a), ID.t, t('a)) => Result.t(t('a), string);
+  let setSubGraphForNode:
+    (t('a), PID.t, ID.t, t('a)) => Result.t(t('a), string);
+  let setSubGraphForRoot: (t('a), ID.t, t('a)) => Result.t(t('a), string);
   let moveSubtree: (t('a), CID.t, PID.t) => Result.t(t('a), string);
   let map: (t('a), 'a => 'b) => t('b);
   let updateChildren: (t('a), ID.t, 'a => 'a) => t('a);

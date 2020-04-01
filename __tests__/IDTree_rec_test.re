@@ -1,4 +1,6 @@
-open Jest;
+open BsMocha.Mocha;
+module Assert = BsMocha.Assert
+
 module M = IDTree_rec;
 module I = Identity;
 module ID = I.FocusId;
@@ -7,56 +9,55 @@ module PID = I.ParentId;
 module P = Path.T;
 
 describe("canMakeEmpty", () => {
-  open Expect;
+
   // open! Expect.Operators;
   let p = M.empty();
 
-  test("hasNoChildren", () => {
-    expect(p.children->Map.size) |> toBe(0)
+  it("hasNoChildren", () => {
+    (p.children->Map.size) |> Assert.equal(0)
   });
 
-  test("emptyIsRootId", () => {
-    expect(p.me === ID.create("root")) |> toBe(true)
+  it("emptyIsRootId", () => {
+    (p.me === ID.create("root")) |> Assert.equal(true)
   });
 
-  test("emptyIsRootFlag", () => {
-    expect(p.isRoot) |> toBe(true)
+  it("emptyIsRootFlag", () => {
+    (p.isRoot) |> Assert.equal(true)
   });
 
-  test("emptyIsRoot", () => {
-    expect(p->M.rootId->Option.getExn == ID.create("root")) |> toBe(true)
+  it("emptyIsRoot", () => {
+    (p->M.rootId->Option.getExn == ID.create("root")) |> Assert.equal(true)
   });
 });
 
 describe("addImmediateChildren", () => {
-  open Expect;
 
   let t = M.empty();
   let path = P.fromList([]);
   let id = ID.create("child1");
   let t2 = t->M.addChild(path, id);
 
-  test("oneChildAdded", () => {
-    expect(t2.children->Map.size) |> toBe(1)
+  it("oneChildAdded", () => {
+    (t2.children->Map.size) |> Assert.equal(1)
   });
 
-  test("childIsInChildrenCollection", () => {
-    expect(t2.children->Map.has(CID.create("child1"))) |> toBe(true)
+  it("childIsInChildrenCollection", () => {
+    (t2.children->Map.has(CID.create("child1"))) |> Assert.equal(true)
   });
 
-  test("childIsNotRoot", () => {
+  it("childIsNotRoot", () => {
     let child1: M.t = t2.children->Map.getExn(CID.create("child1"));
-    expect(child1.isRoot) |> toBe(false);
+    (child1.isRoot) |> Assert.equal(false);
   });
 
   let id = ID.create("child2");
   let t3 = t2->M.addChild(path, id);
-  test("secondChildIsAdded", () => {
-    expect(t3.children->Map.size) |> toBe(2)
+  it("secondChildIsAdded", () => {
+    (t3.children->Map.size) |> Assert.equal(2)
   });
 
-  test("secondChildIsInChildrenCollection", () => {
-    expect(t3.children->Map.has(id->I.convertFocusToChild)) |> toBe(true)
+  it("secondChildIsInChildrenCollection", () => {
+    (t3.children->Map.has(id->I.convertFocusToChild)) |> Assert.equal(true)
   });
 
   %log.debug
@@ -67,14 +68,13 @@ describe("addImmediateChildren", () => {
     )
   ->List.fromArray
   |> String.concat(",");
-  test("secondChildIsNotRoot", () => {
+  it("secondChildIsNotRoot", () => {
     let child2: M.t = t3.children->Map.getExn(id->I.convertFocusToChild);
-    expect(child2.isRoot) |> toBe(false);
+    (child2.isRoot) |> Assert.equal(false);
   });
 });
 
 describe("addLowDownChildren", () => {
-  open Expect;
 
   let t = M.empty();
   let path = P.fromList(["1", "2", "3"]);
@@ -89,17 +89,17 @@ describe("addLowDownChildren", () => {
     ->M.children
     ->Map.getExn(CID.create("1"));
 
-  test("oneChildAdded", () => {
-    expect(t3->M.children->Map.size) |> toBe(1)
+  it("oneChildAdded", () => {
+    (t3->M.children->Map.size) |> Assert.equal(1)
   });
 
-  test("childIsInChildrenCollection", () => {
-    expect(t3->M.children->Map.has(CID.create("child1"))) |> toBe(true)
+  it("childIsInChildrenCollection", () => {
+    (t3->M.children->Map.has(CID.create("child1"))) |> Assert.equal(true)
   });
 
-  test("childIsNotRoot", () => {
+  it("childIsNotRoot", () => {
     let child1: M.t = t3->M.children->Map.getExn(id->I.convertFocusToChild);
-    expect(child1.isRoot) |> toBe(false);
+    (child1.isRoot) |> Assert.equal(false);
   });
 
   let id2 = ID.create("child2");
@@ -114,22 +114,21 @@ describe("addLowDownChildren", () => {
     ->M.children
     ->Map.getExn(CID.create("1"));
 
-  test("twoChildAdded", () => {
-    expect(t5->M.children->Map.size) |> toBe(2)
+  it("twoChildAdded", () => {
+    (t5->M.children->Map.size) |> Assert.equal(2)
   });
 
-  test("secondChildIsInChildrenCollection", () => {
-    expect(t5->M.children->Map.has(CID.create("child2"))) |> toBe(true)
+  it("secondChildIsInChildrenCollection", () => {
+    (t5->M.children->Map.has(CID.create("child2"))) |> Assert.equal(true)
   });
 
-  test("secondChildIsNotRoot", () => {
+  it("secondChildIsNotRoot", () => {
     let child2: M.t = t5->M.children->Map.getExn(id2->I.convertFocusToChild);
-    expect(child2.isRoot) |> toBe(false);
+    (child2.isRoot) |> Assert.equal(false);
   });
 });
 
 describe("addInnerChild", () => {
-  open Expect;
 
   let path1 = P.fromRootToPathList(["2", "1", "a"]);
   let path2 = P.fromRootToPathList(["2", "1", "b"]);
@@ -147,44 +146,42 @@ describe("addInnerChild", () => {
   let t2 = t->M.addChild(path4, ID.create("child4"));
   let t3 = t2->M.children->Map.getExn(CID.create("2"));
 
-  test("dIsChild", () => {
-    expect(t3->M.children->Map.has(CID.create("d"))) |> toBe(true)
+  it("dIsChild", () => {
+    (t3->M.children->Map.has(CID.create("d"))) |> Assert.equal(true)
   });
 
   let check2 = (p, c) => {
-    expect(
+    (
       t3
       ->M.children
       ->Map.getExn(CID.create(p))
       ->M.children
       ->Map.has(CID.create(c)),
     )
-    |> toBe(true);
+    |> Assert.equal(true);
   };
-  test("dHasChild2", () => {
+  it("dHasChild2", () => {
     check2("d", "child4")
   });
 });
 
 describe("removeImmediateChildren", () => {
-  open Expect;
 
   let path = P.fromList([]);
   let id = ID.create("child1");
   let t = M.empty()->M.addChild(path, id);
   let t1 = t->M.removeChild(path, CID.create("child1"));
 
-  test("oneChildRemoved", () => {
-    expect(t1->M.children->Map.size) |> toBe(0)
+  it("oneChildRemoved", () => {
+    (t1->M.children->Map.size) |> Assert.equal(0)
   });
 
-  test("childIsNotInChildrenCollection", () => {
-    expect(t1->M.children->Map.has(CID.create("child1"))) |> toBe(false)
+  it("childIsNotInChildrenCollection", () => {
+    (t1->M.children->Map.has(CID.create("child1"))) |> Assert.equal(false)
   });
 });
 
 describe("removeDeepChildren", () => {
-  open Expect;
 
   let path = P.fromList(["1", "2", "3"]);
   let id1 = ID.create("child1");
@@ -200,21 +197,20 @@ describe("removeDeepChildren", () => {
     ->M.children
     ->Map.getExn(CID.create("1"));
 
-  test("oneChildRemoved", () => {
-    expect(t2.children->Map.size) |> toBe(1)
+  it("oneChildRemoved", () => {
+    (t2.children->Map.size) |> Assert.equal(1)
   });
 
-  test("child1IsNotInChildrenCollection", () => {
-    expect(t2.children->Map.has(id1->I.convertFocusToChild)) |> toBe(false)
+  it("child1IsNotInChildrenCollection", () => {
+    (t2.children->Map.has(id1->I.convertFocusToChild)) |> Assert.equal(false)
   });
 
-  test("child2IsStillInChildrenCollection", () => {
-    expect(t2.children->Map.has(id2->I.convertFocusToChild)) |> toBe(true)
+  it("child2IsStillInChildrenCollection", () => {
+    (t2.children->Map.has(id2->I.convertFocusToChild)) |> Assert.equal(true)
   });
 });
 
 describe("removeDeepChildren2", () => {
-  open Expect;
 
   let path1 = P.fromList(["1", "2", "3"]);
   let path2 = P.fromList(["1", "2", "3", "4"]);
@@ -236,16 +232,16 @@ describe("removeDeepChildren2", () => {
     ->M.children
     ->Map.getExn(CID.create("1"));
 
-  test("oneChildRemoved", () => {
-    expect(t2->M.children->Map.size) |> toBe(1)
+  it("oneChildRemoved", () => {
+    (t2->M.children->Map.size) |> Assert.equal(1)
   });
 
-  test("child1IsStillInChildrenCollection", () => {
-    expect(t2->M.children->Map.has(CID.create("child1"))) |> toBe(true)
+  it("child1IsStillInChildrenCollection", () => {
+    (t2->M.children->Map.has(CID.create("child1"))) |> Assert.equal(true)
   });
 
-  test("child2IsNotInChildrenCollection", () => {
-    expect(t2->M.children->Map.has(CID.create("child2"))) |> toBe(false)
+  it("child2IsNotInChildrenCollection", () => {
+    (t2->M.children->Map.has(CID.create("child2"))) |> Assert.equal(false)
   });
 
   let t3 =
@@ -259,17 +255,16 @@ describe("removeDeepChildren2", () => {
     ->M.children
     ->Map.getExn(CID.create("1"));
 
-  test("oneChildRemoved", () => {
-    expect(t3->M.children->Map.size) |> toBe(1)
+  it("oneChildRemoved", () => {
+    (t3->M.children->Map.size) |> Assert.equal(1)
   });
 
-  test("child1IsStillInChildrenCollection", () => {
-    expect(t3->M.children->Map.has(CID.create("child3"))) |> toBe(true)
+  it("child1IsStillInChildrenCollection", () => {
+    (t3->M.children->Map.has(CID.create("child3"))) |> Assert.equal(true)
   });
 });
 
 describe("removeNonExistantChildren", () => {
-  open Expect;
 
   let path1 = P.fromList(["1", "2", "3"]);
   let path2 = P.fromList(["1", "3", "4"]);
@@ -287,8 +282,8 @@ describe("removeNonExistantChildren", () => {
     ->M.children
     ->Map.getExn(CID.create("1"));
 
-  test("noChildRemoved", () => {
-    expect(t2.children->Map.size) |> toBe(2)
+  it("noChildRemoved", () => {
+    (t2.children->Map.size) |> Assert.equal(2)
   });
 
   let t1 = t->M.removeChild(path2, CID.create("child1"));
@@ -301,13 +296,12 @@ describe("removeNonExistantChildren", () => {
     ->M.children
     ->Map.getExn(CID.create("1"));
 
-  test("noChildRemoved", () => {
-    expect(t2->M.children->Map.size) |> toBe(2)
+  it("noChildRemoved", () => {
+    (t2->M.children->Map.size) |> Assert.equal(2)
   });
 });
 
 describe("removeInnerChild", () => {
-  open Expect;
 
   let path1 = P.fromRootToPathList(["2", "1", "a"]);
   let path2 = P.fromRootToPathList(["2", "1", "b"]);
@@ -323,48 +317,47 @@ describe("removeInnerChild", () => {
 
   let t2 = t->M.removeChild(P.fromList(["2"]), CID.create("1"));
   let t3 = t2->M.children->Map.getExn(CID.create("2"));
-  test("abMovedUp", () => {
+  it("abMovedUp", () => {
     %log.debug
     t2->M.children->Map.getExn(CID.create("2"))->M.toString;
-    expect(t3->M.children->Map.size) |> toBe(3);
+    (t3->M.children->Map.size) |> Assert.equal(3);
   });
 
   let check = s => {
-    expect(t3->M.children->Map.has(CID.create(s))) |> toBe(true);
+    (t3->M.children->Map.has(CID.create(s))) |> Assert.equal(true);
   };
-  test("aIsChild", () => {
+  it("aIsChild", () => {
     check("a")
   });
-  test("bIsChild", () => {
+  it("bIsChild", () => {
     check("b")
   });
-  test("cIsChild", () => {
+  it("cIsChild", () => {
     check("c")
   });
 
   let check2 = (p, c) => {
-    expect(
+    (
       t3
       ->M.children
       ->Map.getExn(CID.create(p))
       ->M.children
       ->Map.has(CID.create(c)),
     )
-    |> toBe(true);
+    |> Assert.equal(true);
   };
-  test("aIsChild2", () => {
+  it("aIsChild2", () => {
     check2("a", "child1")
   });
-  test("bIsChild2", () => {
+  it("bIsChild2", () => {
     check2("b", "child2")
   });
-  test("cIsChild2", () => {
+  it("cIsChild2", () => {
     check2("c", "child3")
   });
 });
 
 describe("getChildPaths", () => {
-  open Expect;
 
   let path0 = P.fromRootToPathList(["2"]);
   let path1 = P.fromRootToPathList(["2", "1", "a"]);
@@ -380,7 +373,7 @@ describe("getChildPaths", () => {
     ->M.addChild(path3, id3);
 
   [%log.debug "test tree: " ++ t->M.toString; ("", "")];
-  test("gotAllChildren", () => {
+  it("gotAllChildren", () => {
     let paths = t->M.getChildPaths(path0, false); // should be all children of 2
     /* %log.debug */
     /* paths */
@@ -389,7 +382,7 @@ describe("getChildPaths", () => {
     /*   ) */
     /* ->List.fromArray */
     /* |> String.concat(","); */
-    expect(paths->Array.size) |> toBe(7);
+    (paths->Array.size) |> Assert.equal(7);
     /*
        {child3:c,2},
        {c:2},
@@ -401,7 +394,7 @@ describe("getChildPaths", () => {
      */
   });
 
-  test("gotFourChildren", () => {
+  it("gotFourChildren", () => {
     let paths = t->M.getChildPaths(P.fromRootToPathList(["2", "1"]), false);
     /* %log.debug */
     /* paths */
@@ -410,7 +403,7 @@ describe("getChildPaths", () => {
     /*   ) */
     /* ->List.fromArray */
     /* |> String.concat(","); */
-    expect(paths->Array.size) |> toBe(4);
+    (paths->Array.size) |> Assert.equal(4);
     /*
        {child2:b,1,2},
        {b:1,2},
@@ -419,7 +412,7 @@ describe("getChildPaths", () => {
      */
   });
 
-  test("gotFourChildIds", () => {
+  it("gotFourChildIds", () => {
     let paths = t->M.getChildIds(P.fromRootToPathList(["2", "1"]), false);
     /* %log.debug */
     /* paths */
@@ -428,7 +421,7 @@ describe("getChildPaths", () => {
     /*   ) */
     /* ->List.fromArray */
     /* |> String.concat(","); */
-    expect(paths->Array.size) |> toBe(4);
+    (paths->Array.size) |> Assert.equal(4);
     /*
        {child2:b,1,2},
        {b:1,2},
@@ -438,30 +431,30 @@ describe("getChildPaths", () => {
   });
 
   let paths = t->M.getChildPaths(path3, false); // should be only one
-  test("gotOnlyOne", () => {
-    expect(paths->Array.size) |> toBe(1)
+  it("gotOnlyOne", () => {
+    (paths->Array.size) |> Assert.equal(1)
   });
-  test("gotChild3", () => {
+  it("gotChild3", () => {
     let pr = paths->Array.getExn(0);
     [%log.debug "pr:" ++ pr->fst->CID.toString; ("", "")];
     [%log.debug "id3:" ++ id3->ID.toString; ("", "")];
-    expect(pr->fst == id3->I.convertFocusToChild) |> toBe(true);
+    (pr->fst == id3->I.convertFocusToChild) |> Assert.equal(true);
   });
-  test("gotChild3Path", () => {
+  it("gotChild3Path", () => {
     let pr = paths->Array.getExn(0);
     [%log.debug "pr:" ++ pr->snd->P.toString; ("", "")];
     [%log.debug "id3:" ++ path3->P.toString; ("", "")];
-    expect(pr->snd->P.eq(path3)) |> toBe(true);
+    (pr->snd->P.eq(path3)) |> Assert.equal(true);
   });
 
-  test("gotNone", () => {
+  it("gotNone", () => {
     let paths = t->M.getChildIds(P.fromRootToPathList(["20", "10"]), false);
-    expect(paths->Array.size) |> toBe(0);
+    (paths->Array.size) |> Assert.equal(0);
   });
 });
 
 describe("_getTests", () => {
-  open Expect;
+
   let path1 = P.fromRootToPathList(["2", "1", "a"]);
   let path2 = P.fromRootToPathList(["2", "1", "b"]);
   let path3 = P.fromRootToPathList(["2", "c"]);
@@ -474,7 +467,7 @@ describe("_getTests", () => {
     ->M.addChild(path2, id2)
     ->M.addChild(path3, id3);
 
-  test("_getFromRoot", () => {
+  it("_getFromRoot", () => {
     let cids = ref([]: list((CID.t, P.t)));
 
     let _ = t->M._get(P.empty(), cids, true);
@@ -486,10 +479,10 @@ describe("_getTests", () => {
       |> String.concat(",");
       ("", "")
     ];
-    expect((cids^)->List.size) |> toBe(8);
+    ((cids^)->List.size) |> Assert.equal(8);
   });
 
-  test("_getFromLeaf", () => {
+  it("_getFromLeaf", () => {
     let cids1 = ref([]: list((CID.t, P.t)));
 
     let _ =
@@ -505,12 +498,11 @@ describe("_getTests", () => {
       |> String.concat(",");
       ("", "")
     ];
-    expect((cids1^)->List.size) |> toBe(1);
+    ((cids1^)->List.size) |> Assert.equal(1);
   });
 });
 
 describe("getAllPaths", () => {
-  open Expect;
 
   let path1 = P.fromRootToPathList(["2", "1", "a"]);
   let path2 = P.fromRootToPathList(["2", "1", "b"]);
@@ -524,7 +516,7 @@ describe("getAllPaths", () => {
     ->M.addChild(path2, id2)
     ->M.addChild(path3, id3);
 
-  test("gotAllPaths", () => {
+  it("gotAllPaths", () => {
     let paths = t->M.getAllPaths; // should be all of them
     /* %log.debug */
     /* paths */
@@ -533,7 +525,7 @@ describe("getAllPaths", () => {
     /*   ) */
     /* ->List.fromArray */
     /* |> String.concat(","); */
-    expect(paths->Array.size) |> toBe(8);
+    (paths->Array.size) |> Assert.equal(8);
     /*
        {child3:c,2},
        {c:2},
@@ -547,7 +539,7 @@ describe("getAllPaths", () => {
      */
   });
 
-  test("gotAllIds", () => {
+  it("gotAllIds", () => {
     let paths = t->M.getAllIds; // should be all of them
     /* %log.debug */
     /* paths */
@@ -556,7 +548,7 @@ describe("getAllPaths", () => {
     /*   ) */
     /* ->List.fromArray */
     /* |> String.concat(","); */
-    expect(paths->Array.size) |> toBe(8);
+    (paths->Array.size) |> Assert.equal(8);
     /*
        {child3:c,2},
        {c:2},
@@ -570,7 +562,7 @@ describe("getAllPaths", () => {
      */
   });
 
-  test("gotChildPAths", () => {
+  it("gotChildPAths", () => {
     let paths = t->M.getChildPaths(P.fromList(["2"]), false); // should not include 2
     /* %log.debug */
     /* paths */
@@ -579,7 +571,7 @@ describe("getAllPaths", () => {
     /*   ) */
     /* ->List.fromArray */
     /* |> String.concat(","); */
-    expect(paths->Array.size) |> toBe(7);
+    (paths->Array.size) |> Assert.equal(7);
     /*
        {child3:c,2},
        {c:2},
@@ -592,7 +584,7 @@ describe("getAllPaths", () => {
      */
   });
 
-  test("gotChildPathsInclusive", () => {
+  it("gotChildPathsInclusive", () => {
     let paths = t->M.getChildPaths(P.fromList(["2"]), true); // should be all of them
     /* %log.debug */
     /* paths */
@@ -601,7 +593,7 @@ describe("getAllPaths", () => {
     /*   ) */
     /* ->List.fromArray */
     /* |> String.concat(","); */
-    expect(paths->Array.size) |> toBe(8);
+    (paths->Array.size) |> Assert.equal(8);
     /*
        {child3:c,2},
        {c:2},
@@ -616,7 +608,6 @@ describe("getAllPaths", () => {
   });
 });
 describe("subtrees", () => {
-  open Expect;
 
   let path1 = P.fromRootToPathList(["2", "1", "a"]);
   let path2 = P.fromRootToPathList(["2", "1", "b"]);
@@ -631,46 +622,45 @@ describe("subtrees", () => {
     ->M.addChild(path3, id3);
 
   let t1 = t->M.getSubtree(path1->P.moveUp, ID.create("a"))->Option.getExn;
-  test("gotSubtree", () => {
-    expect(t1->M.myId == ID.create("a")) |> toBe(true)
+  it("gotSubtree", () => {
+    (t1->M.myId == ID.create("a")) |> Assert.equal(true)
   });
 
-  test("gotSubtreeIds", () => {
+  it("gotSubtreeIds", () => {
     [%log.debug "t1:" ++ t1->M.toString; ("", "")];
     let cids = t1->M.getAllIds;
-    expect(cids->Array.size) |> toBe(2);
+    (cids->Array.size) |> Assert.equal(2);
   });
 
-  test("gotOneChildInSubtree", () => {
-    expect(t1->M.children->Map.size) |> toBe(1)
+  it("gotOneChildInSubtree", () => {
+    (t1->M.children->Map.size) |> Assert.equal(1)
   });
 
-  test("gotChildInSubtree", () => {
-    expect(t1->M.children->Map.has(CID.create("child1"))) |> toBe(true)
+  it("gotChildInSubtree", () => {
+    (t1->M.children->Map.has(CID.create("child1"))) |> Assert.equal(true)
   });
 
   let t1 =
     t
     ->M.getSubtree(path1->P.moveUp->P.moveUp, ID.create("1"))
     ->Option.getExn;
-  test("gotSubtree2", () => {
-    expect(t1->M.myId == ID.create("1")) |> toBe(true)
+  it("gotSubtree2", () => {
+    (t1->M.myId == ID.create("1")) |> Assert.equal(true)
   });
 
-  test("gotTwoChildInSubtree", () => {
-    expect(t1->M.children->Map.size) |> toBe(2)
+  it("gotTwoChildInSubtree", () => {
+    (t1->M.children->Map.size) |> Assert.equal(2)
   });
 
-  test("gotChildInSubtree1", () => {
-    expect(t1->M.children->Map.has(CID.create("a"))) |> toBe(true)
+  it("gotChildInSubtree1", () => {
+    (t1->M.children->Map.has(CID.create("a"))) |> Assert.equal(true)
   });
-  test("gotChildInSubtree2", () => {
-    expect(t1->M.children->Map.has(CID.create("b"))) |> toBe(true)
+  it("gotChildInSubtree2", () => {
+    (t1->M.children->Map.has(CID.create("b"))) |> Assert.equal(true)
   });
 });
 
 describe("addSubtree", () => {
-  open Expect;
 
   let path1 = P.fromRootToPathList(["2", "1", "a"]);
   let path2 = P.fromRootToPathList(["2", "1", "b"]);
@@ -701,11 +691,11 @@ describe("addSubtree", () => {
     t3
     ->M.getSubtree(P.fromRootToPathList(["2", "c"]), ID.create("test"))
     ->Option.getExn;
-  test("notAddedNewRootNode", () => {
-    expect(t4->M.isRoot) |> toBe(false)
+  it("notAddedNewRootNode", () => {
+    (t4->M.isRoot) |> Assert.equal(false)
   });
-  test("hasAddedNodeWithCorrectId", () => {
-    expect(t4->M.myId == ID.create("test")) |> toBe(true)
+  it("hasAddedNodeWithCorrectId", () => {
+    (t4->M.myId == ID.create("test")) |> Assert.equal(true)
   });
   let _get = (p1, p2) => {
     t4
@@ -716,29 +706,28 @@ describe("addSubtree", () => {
     ->M.children;
   };
 
-  test("3aHasTwoChildren", () => {
-    expect(_get("3", "a")->Map.size) |> toBe(2)
+  it("3aHasTwoChildren", () => {
+    (_get("3", "a")->Map.size) |> Assert.equal(2)
   });
 
-  test("3aHasChild4", () => {
-    expect(_get("3", "a")->Map.has(CID.create("child4"))) |> toBe(true)
+  it("3aHasChild4", () => {
+    (_get("3", "a")->Map.has(CID.create("child4"))) |> Assert.equal(true)
   });
 
-  test("3aHasChild5", () => {
-    expect(_get("3", "a")->Map.has(CID.create("child5"))) |> toBe(true)
+  it("3aHasChild5", () => {
+    (_get("3", "a")->Map.has(CID.create("child5"))) |> Assert.equal(true)
   });
 
-  test("3bHasOneChild", () => {
-    expect(_get("3", "b")->Map.size) |> toBe(1)
+  it("3bHasOneChild", () => {
+    (_get("3", "b")->Map.size) |> Assert.equal(1)
   });
 
-  test("3bHasChild6", () => {
-    expect(_get("3", "b")->Map.has(CID.create("child6"))) |> toBe(true)
+  it("3bHasChild6", () => {
+    (_get("3", "b")->Map.has(CID.create("child6"))) |> Assert.equal(true)
   });
 });
 
 describe("removeSubtree", () => {
-  open Expect;
 
   let path1 = P.fromRootToPathList(["2", "1", "a"]);
   let path2 = P.fromRootToPathList(["2", "1", "b"]);
@@ -754,17 +743,17 @@ describe("removeSubtree", () => {
 
   let t1 = t->M.removeSubtree(path1->P.moveUp->P.moveUp, CID.create("1"));
   let t2 = t1->M.children->Map.getExn(CID.create("2"));
-  test("oneSubtreeRemoved", () => {
-    expect(t2->M.children->Map.size) |> toBe(1)
+  it("oneSubtreeRemoved", () => {
+    (t2->M.children->Map.size) |> Assert.equal(1)
   });
 
-  test("subtreeIsNotInChildrenCollection", () => {
-    expect(t2->M.children->Map.has(ID.create("1")->I.convertFocusToChild))
-    |> toBe(false)
+  it("subtreeIsNotInChildrenCollection", () => {
+    (t2->M.children->Map.has(ID.create("1")->I.convertFocusToChild))
+    |> Assert.equal(false)
   });
 
-  test("subtree2IsStillInChildrenCollection", () => {
-    expect(t2->M.children->Map.has(ID.create("c")->I.convertFocusToChild))
-    |> toBe(true)
+  it("subtree2IsStillInChildrenCollection", () => {
+    (t2->M.children->Map.has(ID.create("c")->I.convertFocusToChild))
+    |> Assert.equal(true)
   });
 });
