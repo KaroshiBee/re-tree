@@ -30,7 +30,9 @@
     "@glennsl/bs-json"
   ],
   "bs-dev-dependencies": [
-    "@glennsl/bs-jest"
+    "@glennsl/bs-jest",
+    "bs-fast-check",
+    "bs-mocha"
   ],
   "ppx-flags": [
     "bs-log/ppx"

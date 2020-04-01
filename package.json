@@ -11,7 +11,8 @@
     "clean:bs": "bsb -clean-world",
     "clean:dist": "rm -rf dist",
     "coverage": "nyc report --temp-directory=coverage --reporter=text-lcov | coveralls",
-    "test": "yarn run build:bs:dev && jest --coverage"
+    "test": "yarn run build:bs:dev && jest --coverage",
+    "fastcheck": "./node_modules/.bin/mocha __tests__/*fastcheck.bs.js"
   },
   "keywords": [
     "BuckleScript"
@@ -24,12 +25,14 @@
     "bsconfig.json"
   ],
   "dependencies": {
-    "bs-log": "^1.1.0",
-    "@glennsl/bs-json": "^5.0.2"
+    "@glennsl/bs-json": "^5.0.2",
+    "bs-log": "^1.1.0"
   },
   "devDependencies": {
-    "bs-platform": "^7.0.1",
     "@glennsl/bs-jest": "^0.4.9",
+    "bs-fast-check": "https://github.com/TheSpyder/bs-fast-check.git",
+    "bs-mocha": "^1.0.0",
+    "bs-platform": "^7.0.1",
     "coveralls": "^3.0.9",
     "nyc": "^15.0.0"
   },
