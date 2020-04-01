@@ -59,18 +59,16 @@ describe("moving", () => {
     let pUp = M.fromList([]);
     expect(p->M.moveUp->M.eq(pUp)) |> toBe(true);
   });
-
-  test("canMoveDown", () => {
-    let p = M.fromList(["parent1", "parent2", "root"]);
-    let pUp = M.fromList(["parent1", "parent2"]);
-    expect(p->M.moveDown->M.eq(pUp)) |> toBe(true);
-  });
-
-  test("canMoveDownEmpty", () => {
-    let p = M.empty();
-    let pUp = M.fromList([]);
-    expect(p->M.moveDown->M.eq(pUp)) |> toBe(true);
-  });
+  /* test("canMoveDown", () => { */
+  /*   let p = M.fromList(["parent1", "parent2", "root"]); */
+  /*   let pUp = M.fromList(["parent1", "parent2"]); */
+  /*   expect(p->M.moveDown->M.eq(pUp)) |> toBe(true); */
+  /* }); */
+  /* test("canMoveDownEmpty", () => { */
+  /*   let p = M.empty(); */
+  /*   let pUp = M.fromList([]); */
+  /*   expect(p->M.moveDown->M.eq(pUp)) |> toBe(true); */
+  /* }); */
 });
 
 describe("equality", () => {

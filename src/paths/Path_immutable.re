@@ -17,10 +17,12 @@ let moveUp = parents => {
       },
   };
 };
-let moveDown = parents => {
-  let n = parents.pathUp->List.size;
-  {pathUp: parents.pathUp->List.take(n - 1)->Option.getWithDefault([])};
-};
+
+/* let moveDown = parents => { */
+/*   let n = parents.pathUp->List.size; */
+/*   {pathUp: parents.pathUp->List.take(n - 1)->Option.getWithDefault([])}; */
+/* }; */
+
 let parent = parents =>
   switch (parents.pathUp) {
   | [hd, ..._tl] => Some(hd)
