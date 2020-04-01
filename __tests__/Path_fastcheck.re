@@ -5,7 +5,9 @@ open BsFastCheck.Arbitrary.Combinators;
 
 module M = Path.T;
 
-let idString = stringWithLength(1, 10); // PID need to be not empty
+module IDs = ID_fastcheck.Arbitrary;
+
+let idString = IDs.idString;
 
 describe("construction", () => {
   it("fromPathToRoot is reverse fromRootToPath", () => {
@@ -47,11 +49,11 @@ describe("construction", () => {
 describe("append-remove", () => {
   it("append-remove same as starting", () => {
     assertProperty2(
-      idString,
+      IDs.pid,
       list(idString),
-      (s, ls_) => {
+      (pid, ls_) => {
+        let s = pid->Path.PID.toString;
         let ls = ls_->List.keep(l => l != s);
-        let pid = Path.PID.create(s);
         //        [%log.debug pid->Path.PID.toString; ("", "")];
         let pth1 = M.fromList(ls)->M.append(pid)->M.removeElement(pid);
         //        [%log.debug pth1->M.toString; ("", "")];
@@ -74,11 +76,11 @@ describe("append-remove", () => {
 
   it("remove-append same as starting", () => {
     assertProperty2(
-      idString,
+      IDs.pid,
       list(idString),
-      (s, ls_) => {
+      (pid, ls_) => {
+        let s = pid->Path.PID.toString;
         let ls = ls_->List.keep(l => l != s);
-        let pid = Path.PID.create(s);
         //        [%log.debug pid->Path.PID.toString; ("", "")];
         let pth1 =
           M.fromList([s, ...ls])->M.removeElement(pid)->M.append(pid);
@@ -102,15 +104,15 @@ describe("append-remove", () => {
 
   it("remove removes all occurances", () => {
     assertProperty4(
-      idString,
+      IDs.pid,
       list(idString),
       list(idString),
       list(idString),
-      (s, ls1, ls2, ls3) => {
+      (pid, ls1, ls2, ls3) => {
+        let s = pid->Path.PID.toString;
         let ls1 = ls1->List.keep(l => l != s);
         let ls2 = ls2->List.keep(l => l != s);
         let ls3 = ls3->List.keep(l => l != s);
-        let pid = Path.PID.create(s);
         //        [%log.debug pid->Path.PID.toString; ("", "")];
         let pth1 =
           M.fromList(List.concatMany([|ls1, [s], ls2, [s], ls3|]))
@@ -184,3 +186,7 @@ describe("root/parent/moveup", () => {
     )
   });
 });
+
+module Arbitrary = {
+  let path = list(IDs.idString)->Derive.map(M.fromList);
+};
