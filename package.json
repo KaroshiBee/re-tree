@@ -31,6 +31,7 @@
     "bs-log": "^1.1.0"
   },
   "devDependencies": {
+    "uuid": "^3.4.0",
     "bs-fast-check": "https://github.com/TheSpyder/bs-fast-check.git",
     "bs-mocha": "^1.0.0",
     "bs-platform": "^7.0.1",
