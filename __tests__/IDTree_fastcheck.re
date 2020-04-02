@@ -1,4 +1,5 @@
 open BsMocha.Mocha;
+module Assert = BsMocha.Assert;
 open BsFastCheck.Arbitrary;
 open BsFastCheck.Property.Sync;
 open BsFastCheck.Arbitrary.Combinators;
@@ -45,15 +46,14 @@ module Arbitrary = {
   let fingersN = n =>
     tuple2(
       IDs.id,
-      arrayWithLength(arrayWithLength(IDs.idString, 1, 10), 1, 10),
+      Paths.paths(n, 10)
     )
     ->Derive.map(tup => {
         let id = tup->fst;
         let ls = tup->snd;
-        ls->Array.reduce(
+        ls->List.reduce(
           M.empty(),
-          (t, arrPath) => {
-            let pth = P.fromRootToPathList(arrPath->List.fromArray);
+          (t, pth) => {
             t->M.addChild(pth, id);
           },
         );
@@ -65,9 +65,43 @@ describe("construction", () => {
     assertProperty1(
       Arbitrary.fingersN(4),
       t => {
-        [%log.debug t->M.toString; ("", "")];
+//        [%log.debug "tree: " ++ t->M.toString; ("", "")];
         t->M.getAllIds->Array.size > 0;
       },
     )
   })
 });
+
+describe("removing nodes", () => {
+  let remove = (n, remover) => assertProperty1(
+      Arbitrary.fingersN(n),
+      t => {
+//        [%log.debug "before: " ++ t->M.toString; ("", "")];
+        let ids = M.getAllPaths(t);
+        let t1 = ids->Array.reduce(t, (tree, cpath) => {
+          let cid = cpath->fst;
+          let pth = cpath->snd;
+//          [%log.debug cid->CID.toString ++ ": " ++ pth->P.toString; ("","")];
+          tree->remover(pth, cid);
+        });
+//        [%log.debug "after: " ++ t1->M.toString; ("", "")];
+        t1->M.getAllIds->Array.size == 0;
+      });
+
+  it("removing all children (small trees) in order should leave empty tree", () => {
+    remove(2, M.removeChild);
+  })
+
+  it("removing all children (big trees) in order should leave empty tree", () => {
+    remove(10, M.removeChild);
+  })
+
+  it("removing all subtrees (small trees) in order should leave empty tree", () => {
+    remove(2, M.removeSubtree);
+  })
+
+  it("removing all subtrees (big trees) in order should leave empty tree", () => {
+    remove(10, M.removeSubtree);
+  })
+
+})

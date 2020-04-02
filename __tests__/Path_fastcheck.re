@@ -188,5 +188,9 @@ describe("root/parent/moveup", () => {
 });
 
 module Arbitrary = {
-  let path = list(IDs.idString)->Derive.map(M.fromList);
+  // at most n length path
+  let path = n => setWithLength(IDs.idString, 1, n, ~comparator=(==))->Derive.map(s => s->List.fromArray->M.fromList);
+  // at most m paths of length at least n
+  let paths = (n, m) => setWithLength(path(n), 1, m, ~comparator=M.eq)->Derive.map(s => s->List.fromArray);
+
 };
