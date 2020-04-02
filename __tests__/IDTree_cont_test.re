@@ -566,7 +566,7 @@ describe("_getTests", () => {
 
   it("_getFromRoot", () => {
     let cids = t->M._get(P.empty());
-    (cids->Map.size) |> Assert.equal(9);
+    (cids->List.size) |> Assert.equal(9);
   });
 
   it("_getFromLeaf", () => {
@@ -575,7 +575,7 @@ describe("_getTests", () => {
       ->M.getSubtree(path1, ID.create("child1"))
       ->Option.getExn
       ->M._get(path1);
-    (cids->Map.size) |> Assert.equal(1);
+    (cids->List.size) |> Assert.equal(1);
   });
 });
 

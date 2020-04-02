@@ -213,13 +213,13 @@ let _getSubtreeAtPath = (subtree: t, path: list(CID.t)): option(t) => {
   aux(subtree, path, x => {x});
 };
 // helper function that returns ALL the nodes including the root
-let _get = (subtree: t, path: P.t): CID.Map.t(P.t) => {
+let _get = (subtree: t, path: P.t): list((CID.t, P.t)) => {
   let rec aux = (id: ID.t, path: P.t, childList: list((CID.t, t)), k) => {
     /* [%log.debug "CONT aux called with : " ++ id->ID.toString; ("", "")]; */
     /* [%log.debug "CONT aux called with path: " ++ path->P.toString; ("", "")]; */
     switch (childList) {
     | [] =>
-      let m = CID.Map.make();
+//      let m = CID.Map.make();
       let ppath = path->P.moveUp;
       /* [%log.debug */
       /*   "CONT finished adding: " */
@@ -228,7 +228,8 @@ let _get = (subtree: t, path: P.t): CID.Map.t(P.t) => {
       /*   ++ id->ID.toString; */
       /*   ("", "") */
       /* ]; */
-      k(m->Map.set(id->I.convertFocusToChild, ppath));
+  //    k(m->Map.set(id->I.convertFocusToChild, ppath));
+k([(id->I.convertFocusToChild, ppath)]);
     /* subtree->isRoot */
     /*   ? { */
     /*     [%log.debug "CONT found root"; ("", "")]; */
@@ -259,7 +260,8 @@ let _get = (subtree: t, path: P.t): CID.Map.t(P.t) => {
           /*   ("", "") */
           /* ]; */
           k(
-            ret->Map.mergeMany(siblings->Map.toArray),
+            List.concat(ret, siblings),
+//            ret->Map.mergeMany(siblings->Map.toArray),
           )
         })
       })
@@ -278,8 +280,11 @@ let getChildPaths =
     //    [%log.debug subtree->toString; ("", "")];
     let ret =
       _get(subtree, path)
-      ->Map.remove(_root->I.convertFocusToChild)
-      ->Map.toArray;
+      ->List.keep(tup => fst(tup) != _root->I.convertFocusToChild)
+      ->List.toArray;
+      /* _get(subtree, path) */
+      /* ->Map.remove(_root->I.convertFocusToChild) */
+      /* ->Map.toArray; */
     let tip = subtree->myId->I.convertFocusToChild;
     inclusive ? ret : ret->Array.keep(d => {fst(d) != tip});
   | None => [||]
