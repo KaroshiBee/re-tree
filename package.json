@@ -6,14 +6,15 @@
     "build:bs": "BS_LOG=off bsb -clean-world -make-world",
     "build:bs:dev": "BS_LOG=*,re-tree=* bsb -clean-world -make-world",
     "watch:bs": "BS_LOG=*,re-tree=* bsb -clean-world -make-world -w",
-    "watch:jest": "jest --coverage --watchAll",
+    "watch:test": "./node_modules/.bin/mocha __tests__/*_test.bs.js --watch",
+    "watch:fastcheck": "./node_modules/.bin/mocha __tests__/*_fastcheck.bs.js --watch",
     "clean": "yarn run clean:bs && yarn run clean:dist",
     "clean:bs": "bsb -clean-world",
     "clean:dist": "rm -rf dist",
     "coverage": "nyc report --temp-directory=coverage --reporter=text-lcov | coveralls",
-    "test": "yarn run build:bs:dev && jest --coverage",
-    "fastcheck": "./node_modules/.bin/mocha __tests__/*fastcheck.bs.js --watch",
-    "mocha": "./node_modules/.bin/mocha __tests__/Graph_test.bs.js --watch"
+    "mocha": "./node_modules/.bin/mocha __tests__/*_test.bs.js",
+    "test": "yarn run build:bs:dev && yarn run mocha",
+    "fastcheck": "./node_modules/.bin/mocha __tests__/*fastcheck.bs.js"
   },
   "keywords": [
     "BuckleScript"
@@ -30,7 +31,6 @@
     "bs-log": "^1.1.0"
   },
   "devDependencies": {
-    "@glennsl/bs-jest": "^0.4.9",
     "bs-fast-check": "https://github.com/TheSpyder/bs-fast-check.git",
     "bs-mocha": "^1.0.0",
     "bs-platform": "^7.0.1",

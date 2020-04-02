@@ -1,123 +1,116 @@
-open Jest;
+open BsMocha.Mocha;
+module Assert = BsMocha.Assert
+
 module M = Path.T;
 
 describe("construction", () => {
-  open Expect;
-  open! Expect.Operators;
 
   let p = M.empty();
 
-  test("rootOfEmptyIsNone", () => {
-    expect(p->M.root) === None
+  it("rootOfEmptyIsNone", () => {
+    (p->M.root) |> Assert.equal(None)
   });
 
-  test("parentOfEmptyIsNone", () => {
-    expect(p->M.parent) === None
+  it("parentOfEmptyIsNone", () => {
+    (p->M.parent) |> Assert.equal(None)
   });
 
   let p = M.fromList(["parent", "root"]);
-  test("canMakeFromList", () => {
+  it("canMakeFromList", () => {
     let id = Identity.ParentId.create("parent");
-    expect(p->M.parent->Option.getExn) === id;
+    (p->M.parent->Option.getExn) |> Assert.equal(id);
   });
 
-  test("canMakeFromList1", () => {
+  it("canMakeFromList1", () => {
     let id = Identity.ParentId.create("root");
-    expect(p->M.root->Option.getExn) === id;
+    (p->M.root->Option.getExn) |> Assert.equal(id);
   });
 
   let p = M.fromList(["parent1", "parent2", "root"]);
-  test("pathUpToRoot", () => {
+  it("pathUpToRoot", () => {
     let ls = ["parent1", "parent2", "root"];
     let ps = ls->List.map(Identity.ParentId.create);
     let qs = p->M.pathToRoot;
     let deepEq = Pervasives.(===);
-    expect(List.eq(ps, qs, deepEq)) |> toBe(true);
+    (List.eq(ps, qs, deepEq)) |> Assert.equal(true);
   });
 
-  test("pathFromRoot", () => {
+  it("pathFromRoot", () => {
     let ls = ["root", "parent2", "parent1"];
     let ps = ls->List.map(Identity.ParentId.create);
     let qs = p->M.pathFromRoot;
     let deepEq = Pervasives.(===);
-    expect(List.eq(ps, qs, deepEq)) |> toBe(true);
+    (List.eq(ps, qs, deepEq)) |> Assert.equal(true);
   });
 });
 
 describe("moving", () => {
-  open Expect;
-  open! Expect.Operators;
 
-  test("canMoveUp", () => {
+  it("canMoveUp", () => {
     let p = M.fromList(["parent1", "parent2", "root"]);
     let pUp = M.fromList(["parent2", "root"]);
-    expect(p->M.moveUp->M.eq(pUp)) |> toBe(true);
+    (p->M.moveUp->M.eq(pUp)) |> Assert.equal(true);
   });
 
-  test("canMoveUpEmpty", () => {
+  it("canMoveUpEmpty", () => {
     let p = M.empty();
     let pUp = M.fromList([]);
-    expect(p->M.moveUp->M.eq(pUp)) |> toBe(true);
+    (p->M.moveUp->M.eq(pUp)) |> Assert.equal(true);
   });
-  /* test("canMoveDown", () => { */
+  /* it("canMoveDown", () => { */
   /*   let p = M.fromList(["parent1", "parent2", "root"]); */
   /*   let pUp = M.fromList(["parent1", "parent2"]); */
-  /*   expect(p->M.moveDown->M.eq(pUp)) |> toBe(true); */
+  /*   (p->M.moveDown->M.eq(pUp)) |> Assert.equal(true); */
   /* }); */
-  /* test("canMoveDownEmpty", () => { */
+  /* it("canMoveDownEmpty", () => { */
   /*   let p = M.empty(); */
   /*   let pUp = M.fromList([]); */
-  /*   expect(p->M.moveDown->M.eq(pUp)) |> toBe(true); */
+  /*   (p->M.moveDown->M.eq(pUp)) |> Assert.equal(true); */
   /* }); */
 });
 
 describe("equality", () => {
-  open Expect;
-  open! Expect.Operators;
 
-  test("samePath", () => {
+  it("samePath", () => {
     let p = M.fromList(["parent1", "parent2", "root"]);
     let p2 = M.fromList(["parent1", "parent2", "root"]);
-    expect(p->M.eq(p2)) |> toBe(true);
+    (p->M.eq(p2)) |> Assert.equal(true);
   });
 
-  test("notSamePath", () => {
+  it("notSamePath", () => {
     let p = M.fromList(["parent1", "parent2", "root"]);
     let pUp = M.fromList(["parent3", "root"]);
-    expect(p->M.eq(pUp)) |> toBe(false);
+    (p->M.eq(pUp)) |> Assert.equal(false);
   });
 });
 
 describe("append", () => {
-  open Expect;
 
   let p = M.fromList(["parent1", "parent2"]);
   let p1 = M.fromList(["child1", "parent1", "parent2"]);
-  test("canAppend", () => {
+  it("canAppend", () => {
     let q = p->M.append("child1"->Identity.ParentId.create);
-    expect(q->M.eq(p1)) |> toBe(true);
+    (q->M.eq(p1)) |> Assert.equal(true);
   });
 });
 
 describe("removeElement", () => {
-  open Expect;
 
   let p = M.fromList(["child1", "parent1", "parent2"]);
   let p1 = M.fromList(["child1", "parent2"]);
-  test("canRemove", () => {
+  it("canRemove", () => {
     let q = p->M.removeElement("parent1"->Identity.ParentId.create);
-    expect(q->M.eq(p1)) |> toBe(true);
+    (q->M.eq(p1)) |> Assert.equal(true);
   });
 });
 
 describe("concat", () => {
-  open Expect;
 
   let p = M.fromList(["child1", "parent1", "parent2"]);
   let p1 = M.fromList(["parent3", "parent4"]);
   let p2 = M.fromList(["child1", "parent1", "parent2", "parent3", "parent4"]);
-  test("canConcat", () => {
+  it("canConcat", () => {
     let q = p->M.concat(p1);
-    expect(q->M.eq(p2)) |> toBe(true);
+    (q->M.eq(p2)) |> Assert.equal(true);
   });
 });

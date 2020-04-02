@@ -1,85 +1,85 @@
-open Jest;
+open BsMocha.Mocha;
+module Assert = BsMocha.Assert
+
 module I = Identity;
 
 describe("construction", () => {
-  open Expect;
 
-  test("canMakeFromString", () => {
+  it("canMakeFromString", () => {
     module Id1 =
       I.Make({});
     let id1 = Id1.create("hello");
-    expect(id1->Id1.toString) |> toEqual("hello");
+    (id1->Id1.toString) |> Assert.equal("hello");
   });
 
-  test("canMakeMap", () => {
+  it("canMakeMap", () => {
     module Id =
       I.Make({});
     let key = Id.create("key");
     let mp = Id.Map.make()->Map.set(key, 1);
-    expect(mp->Map.get(key)) |> toEqual(Some(1));
+    (mp->Map.get(key)) |> Assert.equal(Some(1));
   });
 
-  test("canMakeMap2", () => {
+  it("canMakeMap2", () => {
     module Id =
       I.Make({});
     let key = Id.create("key");
     let mp = Id.Map.make()->Map.set(key, 1);
-    expect(mp->Map.get(Id.create("notthere"))) |> toEqual(None);
+    (mp->Map.get(Id.create("notthere"))) |> Assert.equal(None);
   });
   // this doesnt compile - which is what we want
-  /* test("canMakeMap2", () => { */
+  /* it("canMakeMap2", () => { */
   /*   module Id = */
   /*     I.Make({}); */
   /*   let key = Id.create("key"); */
   /*   module Id2 = */
   /*     I.Make({}); */
   /*   let mp = Id.Map.make()->Map.set(key, 1); */
-  /*   expect(mp->Map.get(Id2.create("key"))) |> toEqual(Some(1)); */
+  /*   (mp->Map.get(Id2.create("key"))) |> Assert.equal(Some(1)); */
   /* }); */
 });
 
 describe("conversion", () => {
-  open Expect;
 
-  test("childToParent", () => {
+  it("childToParent", () => {
     let id1 = I.ChildId.create("child");
-    expect(id1->I.convertChildToParent->I.ParentId.toString)
-    |> toEqual("child");
+    (id1->I.convertChildToParent->I.ParentId.toString)
+    |> Assert.equal("child");
   });
 
-  test("parentToChild", () => {
+  it("parentToChild", () => {
     let id1 = I.ParentId.create("parent");
-    expect(id1->I.convertParentToChild->I.ChildId.toString)
-    |> toEqual("parent");
+    (id1->I.convertParentToChild->I.ChildId.toString)
+    |> Assert.equal("parent");
   });
 
-  test("focusToParent", () => {
+  it("focusToParent", () => {
     let id1 = I.FocusId.create("id");
-    expect(id1->I.convertFocusToParent->I.ParentId.toString) |> toEqual("id");
+    (id1->I.convertFocusToParent->I.ParentId.toString) |> Assert.equal("id");
   });
 
-  test("focusToChild", () => {
+  it("focusToChild", () => {
     let id1 = I.FocusId.create("id");
-    expect(id1->I.convertFocusToChild->I.ChildId.toString) |> toEqual("id");
+    (id1->I.convertFocusToChild->I.ChildId.toString) |> Assert.equal("id");
   });
 
-  test("childToFocus", () => {
+  it("childToFocus", () => {
     let id1 = I.ChildId.create("child");
-    expect(id1->I.convertChildToFocus->I.FocusId.toString)
-    |> toEqual("child");
+    (id1->I.convertChildToFocus->I.FocusId.toString)
+    |> Assert.equal("child");
   });
 
-  test("parentToFocus", () => {
+  it("parentToFocus", () => {
     let id1 = I.ParentId.create("parent");
-    expect(id1->I.convertParentToFocus->I.FocusId.toString)
-    |> toEqual("parent");
+    (id1->I.convertParentToFocus->I.FocusId.toString)
+    |> Assert.equal("parent");
   });
 
-  test("canInsertChildIntoParentMap", () => {
+  it("canInsertChildIntoParentMap", () => {
     let key = I.ParentId.create("key1");
     let mp = I.ParentId.Map.make()->Map.set(key, 1);
     let childKey = I.ChildId.create("key2");
     let mp2 = mp->Map.set(I.convertChildToParent(childKey), 2);
-    expect(mp2->Map.get(I.ParentId.create("key2"))) |> toEqual(Some(2));
+    (mp2->Map.get(I.ParentId.create("key2"))) |> Assert.equal(Some(2));
   });
 });
