@@ -1,4 +1,6 @@
-open Jest;
+open BsMocha.Mocha;
+module Assert = BsMocha.Assert
+
 module M = Graph.T;
 module I = Identity;
 module ID = I.FocusId;
@@ -37,69 +39,65 @@ let makeGraph = () => {
 };
 
 describe("canMakeEmpty", () => {
-  open Expect;
-  // open! Expect.Operators;
   let g = M.empty();
 
-  test("hasNoLookup", () => {
-    expect(g->M.size) |> toBe(0)
+  it("has no lookup", () => {
+    (g->M.size) |> Assert.equal(0)
   });
 
-  test("hasNoTree", () => {
-    expect(g->M.hasChildren) |> toBe(false)
+  it("hasNoTree", () => {
+    (g->M.hasChildren) |> Assert.equal(false)
   });
 
-  test("containsNothing", () => {
-    expect(g->M.containsId(ID.create("asd"))) |> toBe(false)
+  it("containsNothing", () => {
+    (g->M.containsId(ID.create("asd"))) |> Assert.equal(false)
   });
 });
 
 describe("addImmediateChildren", () => {
-  open Expect;
 
   let g = M.empty()->M.addNode(ID.create("1"), {one: 4, two: "four"});
 
-  test("oneChildAdded", () => {
-    expect(g->M.size) |> toBe(1)
+  it("oneChildAdded", () => {
+    (g->M.size) |> Assert.equal(1)
   });
 
-  test("childIsInChildrenCollection", () => {
-    expect(g->M.containsId(ID.create("1"))) |> toBe(true)
+  it("childIsInChildrenCollection", () => {
+    (g->M.containsId(ID.create("1"))) |> Assert.equal(true)
   });
 
-  test("childIsInMasterLookup", () => {
-    expect(g->M.containsId(ID.create("1"))) |> toBe(true)
+  it("childIsInMasterLookup", () => {
+    (g->M.containsId(ID.create("1"))) |> Assert.equal(true)
   });
 
   let data = g->M.dataForNode(ID.create("1"))->Option.getExn;
-  test("masterLookupHasCorrectData", () => {
-    expect(data.one) |> toBe(4)
+  it("masterLookupHasCorrectData", () => {
+    (data.one) |> Assert.equal(4)
   });
-  test("masterLookupHasCorrectData2", () => {
-    expect(data.two) |> toBe("four")
+  it("masterLookupHasCorrectData2", () => {
+    (data.two) |> Assert.equal("four")
   });
 
   let path = g->M.pathFromNode(ID.create("1"))->Option.getExn;
-  test("masterLookupHasPathUp", () => {
-    expect(path->P.eq(P.fromList([]))) |> toBe(true)
+  it("masterLookupHasPathUp", () => {
+    (path->P.eq(P.fromList([]))) |> Assert.equal(true)
   });
 
   let g1 = g->M.addNode(ID.create("2"), {one: 8, two: "eight"});
-  test("twoChildAdded", () => {
-    expect(g1->M.size) |> toBe(2)
+  it("twoChildAdded", () => {
+    (g1->M.size) |> Assert.equal(2)
   });
 
-  test("childIsInChildrenCollection", () => {
-    expect(g1->M.containsId(ID.create("2"))) |> toBe(true)
+  it("childIsInChildrenCollection", () => {
+    (g1->M.containsId(ID.create("2"))) |> Assert.equal(true)
   });
 
-  test("childIsInMasterLookup", () => {
-    expect(g1->M.containsId(ID.create("2"))) |> toBe(true)
+  it("childIsInMasterLookup", () => {
+    (g1->M.containsId(ID.create("2"))) |> Assert.equal(true)
   });
 });
 
 describe("addParentChild", () => {
-  open Expect;
 
   let id = ID.create("1");
   let g =
@@ -112,58 +110,58 @@ describe("addParentChild", () => {
         PID.create("2"),
       );
 
-  test("childAdded2", () => {
-    expect(g->M.containsId(ID.create("2"))) |> toBe(true)
+  it("childAdded2", () => {
+    (g->M.containsId(ID.create("2"))) |> Assert.equal(true)
   });
 
-  test("childAdded3", () => {
-    expect(g->M.containsId(ID.create("3"))) |> toBe(true)
+  it("childAdded3", () => {
+    (g->M.containsId(ID.create("3"))) |> Assert.equal(true)
   });
 
   let data = g->M.dataForNode(ID.create("2"))->Option.getExn;
-  test("masterLookupHasCorrectData", () => {
-    expect(data.one) |> toBe(2)
+  it("masterLookupHasCorrectData", () => {
+    (data.one) |> Assert.equal(2)
   });
 
-  test("masterLookupHasCorrectData2", () => {
-    expect(data.two) |> toBe("two")
+  it("masterLookupHasCorrectData2", () => {
+    (data.two) |> Assert.equal("two")
   });
 
   let data = g->M.dataForNode(ID.create("3"))->Option.getExn;
-  test("masterLookupHasCorrectData3", () => {
-    expect(data.one) |> toBe(1)
+  it("masterLookupHasCorrectData3", () => {
+    (data.one) |> Assert.equal(1)
   });
 
-  test("masterLookupHasCorrectData4", () => {
-    expect(data.two) |> toBe("one")
+  it("masterLookupHasCorrectData4", () => {
+    (data.two) |> Assert.equal("one")
   });
 
   let path = g->M.pathFromNode(ID.create("2"))->Option.getExn;
-  test("masterLookupHasPathUp", () => {
-    expect(path->P.eq(P.fromList(["1"]))) |> toBe(true)
+  it("masterLookupHasPathUp", () => {
+    (path->P.eq(P.fromList(["1"]))) |> Assert.equal(true)
   });
   let path = g->M.pathFromNode(ID.create("3"))->Option.getExn;
-  test("masterLookupHasPathUp", () => {
-    expect(path->P.eq(P.fromList(["2", "1"]))) |> toBe(true)
+  it("masterLookupHasPathUp", () => {
+    (path->P.eq(P.fromList(["2", "1"]))) |> Assert.equal(true)
   });
 
   let t = g->M.subGraphForNode(ID.create("2"))->Option.getExn;
   [%log.debug "original: " ++ g->M.toString(d => d.two); ("", "")];
   [%log.debug "subgraph: " ++ t->M.toString(d => d.two); ("", "")];
-  test("subtreeHasChild", () => {
-    expect(t->M.size) |> toBe(2)
+  it("subtreeHasChild", () => {
+    (t->M.size) |> Assert.equal(2)
   });
-  test("subtreeHasChild1", () => {
-    expect(t->M.containsId(ID.create("3"))) |> toBe(true)
+  it("subtreeHasChild1", () => {
+    (t->M.containsId(ID.create("3"))) |> Assert.equal(true)
   });
 });
 
 describe("moveChild", () => {
-  open Expect;
+
   let g = makeGraph();
   let _test = (g, s) => {
-    test("_test", () => {
-      expect(g->M.containsId(ID.create(s))) |> toBe(true)
+    it("_test", () => {
+      (g->M.containsId(ID.create(s))) |> Assert.equal(true)
     });
   };
   _test(g, "1");
@@ -172,23 +170,23 @@ describe("moveChild", () => {
   _test(g, "4");
 
   let path = g->M.pathFromNode(id4)->Option.getExn;
-  test("4PathUp", () => {
-    expect(path->P.eq(P.fromList(["3", "1"]))) |> toBe(true)
+  it("4PathUp", () => {
+    (path->P.eq(P.fromList(["3", "1"]))) |> Assert.equal(true)
   });
   let path = g->M.pathFromNode(id3)->Option.getExn;
-  test("3PathUp", () => {
-    expect(path->P.eq(P.fromList(["1"]))) |> toBe(true)
+  it("3PathUp", () => {
+    (path->P.eq(P.fromList(["1"]))) |> Assert.equal(true)
   });
   let path = g->M.pathFromNode(id2)->Option.getExn;
-  test("2PathUp", () => {
-    expect(path->P.eq(P.fromList(["1"]))) |> toBe(true)
+  it("2PathUp", () => {
+    (path->P.eq(P.fromList(["1"]))) |> Assert.equal(true)
   });
 
   let g1 =
     g->M.moveChild(id3->I.convertFocusToChild, id2->I.convertFocusToParent);
 
-  test("notErrored", () => {
-    expect(g1->Result.isOk) |> toBe(true)
+  it("notErrored", () => {
+    (g1->Result.isOk) |> Assert.equal(true)
   });
 
   let g1 = g1->Result.getExn;
@@ -197,27 +195,26 @@ describe("moveChild", () => {
   _test(g1, "3");
   _test(g1, "4");
   let path = g1->M.pathFromNode(id4)->Option.getExn;
-  test("4PathUp", () => {
-    expect(path->P.eq(P.fromList(["1"]))) |> toBe(true)
+  it("4PathUp", () => {
+    (path->P.eq(P.fromList(["1"]))) |> Assert.equal(true)
   });
   let path = g1->M.pathFromNode(id3)->Option.getExn;
-  test("3PathUp", () => {
-    expect(path->P.eq(P.fromList(["2", "1"]))) |> toBe(true)
+  it("3PathUp", () => {
+    (path->P.eq(P.fromList(["2", "1"]))) |> Assert.equal(true)
   });
   let path = g->M.pathFromNode(id2)->Option.getExn;
-  test("2PathUp", () => {
-    expect(path->P.eq(P.fromList(["1"]))) |> toBe(true)
+  it("2PathUp", () => {
+    (path->P.eq(P.fromList(["1"]))) |> Assert.equal(true)
   });
 });
 
 describe("removeSubtree", () => {
-  open Expect;
 
   let g = makeGraph();
 
   let _test = (g, s, e) => {
-    test("_test", () => {
-      expect(g->M.containsId(ID.create(s))) |> toBe(e)
+    it("_test", () => {
+      (g->M.containsId(ID.create(s))) |> Assert.equal(e)
     });
   };
   _test(g, "1", true);
@@ -228,8 +225,8 @@ describe("removeSubtree", () => {
   %log.debug
   g->M.pathFromNode(id3)->Option.getExn->P.toString;
   let g1 = g->M.removeSubtree(id3);
-  test("notErrored", () => {
-    expect(g1->Result.isOk) |> toBe(true)
+  it("notErrored", () => {
+    (g1->Result.isOk) |> Assert.equal(true)
   });
 
   let g1 = g1->Result.getExn;
@@ -240,13 +237,12 @@ describe("removeSubtree", () => {
 });
 
 describe("moveSubtree", () => {
-  open Expect;
 
   let g = makeGraph();
 
   let _test = (g, s) => {
-    test("_test", () => {
-      expect(g->M.containsId(ID.create(s))) |> toBe(true)
+    it("_test", () => {
+      (g->M.containsId(ID.create(s))) |> Assert.equal(true)
     });
   };
   _test(g, "1");
@@ -255,23 +251,23 @@ describe("moveSubtree", () => {
   _test(g, "4");
 
   let path = g->M.pathFromNode(id4)->Option.getExn;
-  test("4PathUp", () => {
-    expect(path->P.eq(P.fromList(["3", "1"]))) |> toBe(true)
+  it("4PathUp", () => {
+    (path->P.eq(P.fromList(["3", "1"]))) |> Assert.equal(true)
   });
   let path = g->M.pathFromNode(id3)->Option.getExn;
-  test("3PathUp", () => {
-    expect(path->P.eq(P.fromList(["1"]))) |> toBe(true)
+  it("3PathUp", () => {
+    (path->P.eq(P.fromList(["1"]))) |> Assert.equal(true)
   });
   let path = g->M.pathFromNode(id2)->Option.getExn;
-  test("2PathUp", () => {
-    expect(path->P.eq(P.fromList(["1"]))) |> toBe(true)
+  it("2PathUp", () => {
+    (path->P.eq(P.fromList(["1"]))) |> Assert.equal(true)
   });
 
   let g1 =
     g->M.moveSubtree(id3->I.convertFocusToChild, id2->I.convertFocusToParent);
 
-  test("notErrored", () => {
-    expect(g1->Result.isOk) |> toBe(true)
+  it("notErrored", () => {
+    (g1->Result.isOk) |> Assert.equal(true)
   });
 
   let g1 = g1->Result.getExn;
@@ -280,21 +276,20 @@ describe("moveSubtree", () => {
   _test(g1, "3");
   _test(g1, "4");
   let path = g1->M.pathFromNode(id4)->Option.getExn;
-  test("4PathUp_", () => {
-    expect(path->P.eq(P.fromList(["3", "2", "1"]))) |> toBe(true)
+  it("4PathUp_", () => {
+    (path->P.eq(P.fromList(["3", "2", "1"]))) |> Assert.equal(true)
   });
   let path = g1->M.pathFromNode(id3)->Option.getExn;
-  test("3PathUp_", () => {
-    expect(path->P.eq(P.fromList(["2", "1"]))) |> toBe(true)
+  it("3PathUp_", () => {
+    (path->P.eq(P.fromList(["2", "1"]))) |> Assert.equal(true)
   });
   let path = g->M.pathFromNode(id2)->Option.getExn;
-  test("2PathUp_", () => {
-    expect(path->P.eq(P.fromList(["1"]))) |> toBe(true)
+  it("2PathUp_", () => {
+    (path->P.eq(P.fromList(["1"]))) |> Assert.equal(true)
   });
 });
 
 describe("mapping", () => {
-  open Expect;
 
   let g = makeGraph();
 
@@ -302,8 +297,8 @@ describe("mapping", () => {
 
   let _test = (s, ss) => {
     let data = g1->M.dataForNode(ID.create(s))->Option.getExn;
-    test("hasCorrectData1", () => {
-      expect(data) |> toBe(ss)
+    it("hasCorrectData1", () => {
+      (data) |> Assert.equal(ss)
     });
   };
 
@@ -314,7 +309,6 @@ describe("mapping", () => {
 });
 
 describe("foreach", () => {
-  open Expect;
 
   let g = makeGraph();
 
@@ -322,20 +316,19 @@ describe("foreach", () => {
 
   let _ = g->M.forEach((_id, _d) => {incr(i)});
 
-  test("inc", () => {
-    expect(i^) |> toBe(4)
+  it("inc", () => {
+    (i^) |> Assert.equal(4)
   });
 });
 
 describe("keep", () => {
-  open Expect;
 
   let g = makeGraph();
   let g1 = g->M.keep((id, d) => d.one < 2 || id == id3);
 
   let _test = (g, s, e) => {
-    test("_test", () => {
-      expect(g->M.containsId(ID.create(s))) |> toBe(e)
+    it("_test", () => {
+      (g->M.containsId(ID.create(s))) |> Assert.equal(e)
     });
   };
   _test(g1, "1", true);
@@ -343,8 +336,8 @@ describe("keep", () => {
   _test(g1, "3", true);
   _test(g1, "4", false);
   let path = g1->M.pathFromNode(id3)->Option.getExn;
-  test("3PathUp", () => {
-    expect(path->P.eq(P.fromList(["1"]))) |> toBe(true)
+  it("3PathUp", () => {
+    (path->P.eq(P.fromList(["1"]))) |> Assert.equal(true)
   });
 
   let g2 = g->M.keep((id, d) => d.one <= 2 || id == id4);
@@ -360,17 +353,17 @@ describe("keep", () => {
   _test(g3, "3", true);
   _test(g3, "4", false);
   let path = g3->M.pathFromNode(id2)->Option.getExn;
-  test("2PathUp", () => {
-    expect(path->P.eq(P.fromList(["1"]))) |> toBe(true)
+  it("2PathUp", () => {
+    (path->P.eq(P.fromList(["1"]))) |> Assert.equal(true)
   });
 });
 
 describe("setSubGraphForNode-should-set-subgraph", () => {
-  open Expect;
+
   let g = makeGraph();
   let _test = (g, s) => {
-    test("_test", () => {
-      expect(g->M.containsId(ID.create(s))) |> toBe(true)
+    it("_test", () => {
+      (g->M.containsId(ID.create(s))) |> Assert.equal(true)
     });
   };
   _test(g, "1");
@@ -391,19 +384,18 @@ describe("setSubGraphForNode-should-set-subgraph", () => {
   | Ok(g1) =>
     _test(g1, "5");
     _test(g1, "6");
-  | Error(_) => test("fail", () => {
-                  expect(true) |> toBe(false)
+  | Error(_) => it("fail", () => {
+                  (true) |> Assert.equal(false)
                 })
   };
 });
 
 describe("updteChildren-should-update-only-children", () => {
-  open Expect;
 
   let _test = (g, n, vl) => {
     let data = g->M.dataForNode(ID.create(n))->Option.getExn;
-    test("masterLookupHasCorrectData", () => {
-      expect(data.one) |> toBe(vl)
+    it("masterLookupHasCorrectData", () => {
+      (data.one) |> Assert.equal(vl)
     });
   };
 
