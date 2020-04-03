@@ -43,7 +43,7 @@ module Arbitrary = {
 
   // generate fingery trees - lots of straight down deep branches
   // NOTE i dont mean finger-trees
-  let fingersN = n =>
+  let fingersN_ = (n, empty) =>
     tuple2(
       IDs.id,
       Paths.paths(n, 10)
@@ -52,12 +52,15 @@ module Arbitrary = {
         let id = tup->fst;
         let ls = tup->snd;
         ls->List.reduce(
-          M.empty(),
+          empty,
           (t, pth) => {
             t->M.addChild(pth, id);
           },
         );
       });
+
+  let fingersN = n => fingersN_(n, M.empty());
+  let fingersN_subtree = (n, name) => fingersN_(n, M.emptySubtree(name->ID.create));
 };
 
 describe("construction", () => {
@@ -73,7 +76,7 @@ describe("construction", () => {
 });
 
 describe("removing nodes", () => {
-  let remove = (n, remover) => assertProperty1(
+  let remove = (n, remover)  => assertProperty1(
       Arbitrary.fingersN(n),
       t => {
 //        [%log.debug "before: " ++ t->M.toString; ("", "")];
@@ -90,18 +93,40 @@ describe("removing nodes", () => {
 
   it("removing all children (small trees) should leave empty tree", () => {
     remove(2, M.removeChild);
-  })
+  });
 
   it("removing all children (big trees) should leave empty tree", () => {
     remove(10, M.removeChild);
-  })
+  });
 
   it("removing all subtrees (small trees) should leave empty tree", () => {
     remove(2, M.removeSubtree);
-  })
+  });
 
   it("removing all subtrees (big trees) should leave empty tree", () => {
     remove(10, M.removeSubtree);
-  })
+  });
+
+  it("removing child should bring subtree up a level", () => {
+    let s1 = "test1";
+    assertProperty1(
+      Arbitrary.fingersN_subtree(2, s1),
+      t => {
+        let expected = t->M.children;
+        let id = s1->ID.create;
+        let cid = s1->CID.create;
+        let tt = M.empty()->M.addSubtree(id, P.empty(), t);
+        // [%log.debug "before: " ++ tt->M.toString; ("", "")];
+        let ttt = tt->M.removeChild(P.empty(), cid);
+        // [%log.debug "after: " ++ ttt->M.toString; ("", "")];
+        let actual = ttt->M.children;
+        let sizes = actual->Map.size == expected->Map.size;
+        let ok = sizes ? actual->Map.reduce(true, (acc, ky, vl) => {
+          acc && vl->M.toString == expected->Map.get(ky)->Option.map(M.toString)->Option.getWithDefault("");
+        }) : false;
+        ok;
+      }
+);
+  });
 
 })
