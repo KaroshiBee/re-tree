@@ -88,19 +88,19 @@ describe("removing nodes", () => {
         t1->M.getAllIds->Array.size == 0;
       });
 
-  it("removing all children (small trees) in order should leave empty tree", () => {
+  it("removing all children (small trees) should leave empty tree", () => {
     remove(2, M.removeChild);
   })
 
-  it("removing all children (big trees) in order should leave empty tree", () => {
+  it("removing all children (big trees) should leave empty tree", () => {
     remove(10, M.removeChild);
   })
 
-  it("removing all subtrees (small trees) in order should leave empty tree", () => {
+  it("removing all subtrees (small trees) should leave empty tree", () => {
     remove(2, M.removeSubtree);
   })
 
-  it("removing all subtrees (big trees) in order should leave empty tree", () => {
+  it("removing all subtrees (big trees) should leave empty tree", () => {
     remove(10, M.removeSubtree);
   })
 
