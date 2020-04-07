@@ -34,6 +34,7 @@ module type IDTREE = {
      */
   let addSubtree: (t, ID.t, P.t, t) => t;
   let removeSubtree: (t, P.t, CID.t) => t;
+  let eq: (t, t) => bool;
 };
 
 module T: IDTREE = {
