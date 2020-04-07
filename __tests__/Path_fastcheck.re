@@ -9,7 +9,7 @@ module IDs = ID_fastcheck.Arbitrary;
 
 let idString = IDs.idString;
 
-describe("construction", () => {
+describe("Path: construction", () => {
   it("fromPathToRoot is reverse fromRootToPath", () => {
     assertProperty1(
       list(idString),
@@ -46,7 +46,7 @@ describe("construction", () => {
   });
 });
 
-describe("append-remove", () => {
+describe("Path: append-remove", () => {
   it("append-remove same as starting", () => {
     assertProperty2(
       IDs.pid,
@@ -127,7 +127,7 @@ describe("append-remove", () => {
   });
 });
 
-describe("root/parent/moveup", () => {
+describe("Path: root/parent/moveup", () => {
   it("root of non empty is always the same", () => {
     assertProperty2(
       idString,

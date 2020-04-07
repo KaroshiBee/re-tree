@@ -19,7 +19,7 @@ module Arbitrary = {
     IDs.id
     ->Derive.map(M.emptySubtree)
     ->Derive.chain(t => {
-        let pid = t->M.myId->Identity.FocusId.toString;
+        let pid = t->M.myId->ID.toString;
         let pth = P.fromPathToRootList([pid]);
         list(IDs.id)
         ->Derive.map(ids =>
@@ -32,7 +32,7 @@ module Arbitrary = {
     ->Derive.map(M.emptySubtree)
     ->Derive.chain(t => {
         let pid = t->M.myId;
-        let pth = P.fromPathToRootList([pid->Identity.FocusId.toString]);
+        let pth = P.fromPathToRootList([pid->ID.toString]);
         list(depth1)
         ->Derive.map(children =>
             children->List.reduce(t, (tree, childtree) =>
@@ -63,7 +63,15 @@ module Arbitrary = {
   let fingersN_subtree = (n, name) => fingersN_(n, M.emptySubtree(name->ID.create));
 };
 
-describe("construction", () => {
+module Utils = {
+  let equalMaps = (expected, actual) => {
+    expected->Map.eq(actual, (x, y) => {
+      x->M.toString == y->M.toString
+    });
+  };
+}
+
+describe("IDTree: construction", () => {
   it("constructs", () => {
     assertProperty1(
       Arbitrary.fingersN(4),
@@ -75,19 +83,19 @@ describe("construction", () => {
   })
 });
 
-describe("removing nodes", () => {
+describe("IDTree: removing nodes", () => {
   let remove = (n, remover)  => assertProperty1(
       Arbitrary.fingersN(n),
       t => {
-//        [%log.debug "before: " ++ t->M.toString; ("", "")];
+        /* [%log.debug "before: " ++ t->M.toString; ("", "")]; */
         let ids = M.getAllPaths(t);
         let t1 = ids->Array.reduce(t, (tree, cpath) => {
           let cid = cpath->fst;
           let pth = cpath->snd;
-//          [%log.debug cid->CID.toString ++ ": " ++ pth->P.toString; ("","")];
+          /* [%log.debug cid->CID.toString ++ ": " ++ pth->P.toString; ("","")]; */
           tree->remover(pth, cid);
         });
-//        [%log.debug "after: " ++ t1->M.toString; ("", "")];
+        /* [%log.debug "after: " ++ t1->M.toString; ("", "")]; */
         t1->M.getAllIds->Array.size == 0;
       });
 
@@ -107,10 +115,8 @@ describe("removing nodes", () => {
     remove(10, M.removeSubtree);
   });
 
-  it("removing child should bring subtree up a level", () => {
-    let s1 = "test1";
-    assertProperty1(
-      Arbitrary.fingersN_subtree(2, s1),
+  let removeSubtree = (n, s1) => assertProperty1(
+      Arbitrary.fingersN_subtree(n, s1),
       t => {
         let expected = t->M.children;
         let id = s1->ID.create;
@@ -120,13 +126,53 @@ describe("removing nodes", () => {
         let ttt = tt->M.removeChild(P.empty(), cid);
         // [%log.debug "after: " ++ ttt->M.toString; ("", "")];
         let actual = ttt->M.children;
-        let sizes = actual->Map.size == expected->Map.size;
-        let ok = sizes ? actual->Map.reduce(true, (acc, ky, vl) => {
-          acc && vl->M.toString == expected->Map.get(ky)->Option.map(M.toString)->Option.getWithDefault("");
-        }) : false;
-        ok;
+        Utils.equalMaps(expected, actual);
       }
-);
+  );
+
+  it("removing child should bring subtree up a level (small)", () => {
+    removeSubtree(2, "test1");
   });
+
+  it("removing child should bring subtree up a level (large)", () => {
+    removeSubtree(10, "test1");
+  });
+
+})
+
+describe("IDTree: removing then adding nodes/subtrees & vice versa", () => {
+  let remove = (gen)  => {
+      gen->Derive.chain(t => {
+        /* [%log.debug "before: " ++ t->M.toString; ("", "")]; */
+        let i = integerRange(1, t->M.getAllIds->Array.size-1);
+        tuple2(constant(t), i)
+      })->Derive.chain( ((t, i)) => {
+        let (id, pth) = M.getAllPaths(t)->Array.getExn(i);
+        let sub = t->M.getSubtree(pth, id->I.convertChildToFocus)->constant;
+        let tt = t->M.removeSubtree(pth, id)->constant;
+        tuple5(t->constant, id->constant, pth->constant, sub, tt);
+      });
+  };
+
+  let add = (gen)  => {
+      gen->Derive.chain( ((t, cid, pth, sub, tt)) => {
+        /*[%log.debug "before: " ++ t->M.toString; ("", "")]; */
+        let id = cid->I.convertChildToFocus;
+        tuple2(t->constant, tt->M.addSubtree(id, pth, sub->Option.getWithDefault(M.emptySubtree(id)))->constant);
+      })
+  }
+
+    it("IDTree: remove then add back gives same as start", () => {
+      assertProperty1(
+        Arbitrary.fingersN(2)->remove->add,
+        ((expected, actual)) => {
+          /* [%log.debug "expected: " ++ expected->M.toString; ("", "")]; */
+          /* [%log.debug "actual: " ++ actual->M.toString; ("", "")]; */
+          expected->M.eq(actual);
+        }
+      )
+    });
+
+  // NOTE remove then add child is not same as start as children of child get moved up
 
 })
