@@ -1,21 +1,15 @@
 open Jest;
+module M = Graph.T;
 module I = Identity;
 module ID = I.FocusId;
 module CID = I.ChildId;
 module PID = I.ParentId;
 module P = Path.T;
 
-module Data = {
-type t = {
+type data = {
   one: int,
   two: string,
 };
-let toString = t => {
-  "{ one: " ++ t.one->string_of_int ++ ", two: " ++ t.two ++ " }";
-}
-}
-
-module M = Graph.Make(Data);
 
 let id1 = ID.create("1");
 let id2 = ID.create("2");
@@ -154,8 +148,8 @@ describe("addParentChild", () => {
   });
 
   let t = g->M.subGraphForNode(ID.create("2"))->Option.getExn;
-  [%log.debug "original: " ++ g->M.toString; ("", "")];
-  [%log.debug "subgraph: " ++ t->M.toString; ("", "")];
+  [%log.debug "original: " ++ g->M.toString(d => d.two); ("", "")];
+  [%log.debug "subgraph: " ++ t->M.toString(d => d.two); ("", "")];
   test("subtreeHasChild", () => {
     expect(t->M.size) |> toBe(2)
   });
@@ -304,17 +298,19 @@ describe("mapping", () => {
 
   let g = makeGraph();
 
+  let g1 = g->M.map(d => d.one->string_of_int ++ ":" ++ d.two);
+
   let _test = (s, ss) => {
-    let data = g->M.dataForNode(ID.create(s))->Option.getExn;
+    let data = g1->M.dataForNode(ID.create(s))->Option.getExn;
     test("hasCorrectData1", () => {
-      expect(data->Data.toString) |> toBe(ss)
+      expect(data) |> toBe(ss)
     });
   };
 
-  _test("1", "{ one: 1, two: one }");
-  _test("2", "{ one: 2, two: two }");
-  _test("3", "{ one: 3, two: three }");
-  _test("4", "{ one: 4, two: four }");
+  _test("1", "1:one");
+  _test("2", "2:two");
+  _test("3", "3:three");
+  _test("4", "4:four");
 });
 
 describe("foreach", () => {
