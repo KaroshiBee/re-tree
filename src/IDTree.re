@@ -40,3 +40,40 @@ module type IDTREE = {
 module T: IDTREE = {
   include IDTree_cont;
 };
+
+module type IDTREE2 = {
+  type root;
+  type subtree;
+  type t('a);
+
+  /* makes an empty IDTree with root, root is never included in the IDTree */
+  let empty: unit => t(root);
+  /* makes an empty IDTree with ID as (non-root) parent, ID is included in the IDTree */
+  let emptySubtree: ID.t => t(subtree);
+  let isRoot: t('a) => bool;
+  let rootId: t('a) => option(ID.t);
+  let myId: t('a) => ID.t;
+  let children: t('a) => CID.Map.t(t('a));
+  let hasChildren: t('a) => bool;
+  let toSummaryString: t('a) => string;
+  let toString: t('a) => string;
+  /* add ID into t under path P */
+  let addChild: (t('a), P.t, ID.t) => t('a);
+  let removeChild: (t('a), P.t, CID.t) => t('a);
+  let getChildPaths: (t('a), P.t, bool) => array((CID.t, P.t));
+  let getAllPaths: t('a) => array((CID.t, P.t));
+  let getChildIds: (t('a), P.t, bool) => array(CID.t);
+  let getAllIds: t('a) => array(CID.t);
+  let getSubtree: (t('a), P.t, ID.t) => option(t(subtree));
+  /* add subtree from ID into t under new Path P
+       ID is needed in case you are adding an empty subtree with a proper root node
+     */
+  let addSubtree: (t('a), ID.t, P.t, t(subtree)) => t('a);
+  let addRootAsSubtree: (t('a), ID.t, P.t, t(root)) => t('a);
+  let removeSubtree: (t('a), P.t, CID.t) => t('a);
+  let eq: (t('a), t('a)) => bool;
+};
+
+module T2: IDTREE2 = {
+  include IDTree_cont2;
+};
