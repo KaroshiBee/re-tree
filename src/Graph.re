@@ -38,6 +38,7 @@ module type GRAPH = {
   let keep: (t('a), (ID.t, 'a) => bool) => t('a);
   let toArray: t('a) => array('a);
   let toKeyValueArray: t('a) => array((ID.t, 'a));
+  let toKeyValueArrayWithPaths: t('a) => array((ID.t, P.t, 'a));
 };
 
 module T: GRAPH = {

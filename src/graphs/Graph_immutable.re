@@ -515,10 +515,14 @@ let keep = (graph: t('a), f: (ID.t, 'a) => bool): t('a) => {
   {masterLookup, tree};
 };
 
-let toKeyValueArray = (graph: t('a)): array((ID.t, 'a)) => {
+let toKeyValueArrayWithPaths = (graph: t('a)): array((ID.t, P.t, 'a)) => {
   graph.masterLookup
   ->Map.toArray
-  ->Array.map(kv => (fst(kv), (snd(kv): dataWithPath('a)).value));
+  ->Array.map(((id, d)) => {(id, d.pathUp, d.value)});
+};
+
+let toKeyValueArray = (graph: t('a)): array((ID.t, 'a)) => {
+  graph->toKeyValueArrayWithPaths->Array.map(((id, _pth, d)) => (id, d));
 };
 
 let toArray = (graph: t('a)): array('a) => {
