@@ -152,22 +152,30 @@ let subGraphForNode = (graph: t('a), id: ID.t): option(t('a)) => {
   };
 };
 
-let childrenOfRoot = (graph: t('a)): list(t('a)) => {
-  [%log.debug "childrenOfRoot"; ("", "")];
+let childIdsOfRoot = (graph: t('a)): list(ID.t) => {
+  [%log.debug "childIdsOfRoot"; ("", "")];
   graph.tree->IDTree.isRoot
     ? {
       [%log.debug "is root"; ("", "")];
       graph.tree
       ->IDTree.children
       ->Map.keysToArray
-      ->Array.reduce([], (trees, cid) => {
-          switch (graph->subGraphForNode(cid->I.convertChildToFocus)) {
-          | Some(t) => [t, ...trees]
-          | None => trees
-          }
-        });
+      ->List.fromArray
+      ->List.map(I.convertChildToFocus);
     }
     : [];
+};
+
+let childrenOfRoot = (graph: t('a)): list(t('a)) => {
+  [%log.debug "childrenOfRoot"; ("", "")];
+  graph
+  ->childIdsOfRoot
+  ->List.reduce([], (trees, id) => {
+      switch (graph->subGraphForNode(id)) {
+      | Some(t) => [t, ...trees]
+      | None => trees
+      }
+    });
 };
 
 let addNodeAtPath = (graph: t('a), id: ID.t, data: 'a, path: P.t): t('a) => {
@@ -527,4 +535,126 @@ let toKeyValueArray = (graph: t('a)): array((ID.t, 'a)) => {
 
 let toArray = (graph: t('a)): array('a) => {
   graph->toKeyValueArray->Array.map(d => snd(d));
+};
+
+let rec _auxTopoSort = (root, unsorted, nodeId, parentNodeId) => {
+  switch (unsorted) {
+  | [] =>
+    [%log.debug "last one: " ++ root->nodeId->ID.toString; ("", "")];
+    [];
+  | _ as unsorted =>
+    let pid = root->nodeId->I.convertFocusToParent;
+    let (children, unsorted_) =
+      unsorted->List.partition(d =>
+        d
+        ->parentNodeId
+        ->Option.eq(Some(pid), (a, b) => a->PID.toString == b->PID.toString)
+      );
+    [%log.debug
+      root->nodeId->ID.toString
+      ++ " children: "
+      ++ (
+        children->List.map(d => d->nodeId->ID.toString) |> String.concat(",")
+      );
+      ("", "")
+    ];
+    children->List.concat(
+      children
+      ->List.map(c => c->_auxTopoSort(unsorted_, nodeId, parentNodeId))
+      ->List.toArray
+      ->List.concatMany,
+    );
+  };
+};
+
+let topoSort = (data: array('a), nodeId, parentNodeId) => {
+  let sortedData =
+    // NOTE sort by parentNodeId so that the root node with id="" is first
+    data
+    ->SortArray.stableSortBy((d1, d2) => {
+        compare(
+          d1
+          ->parentNodeId
+          ->Option.map(PID.toString)
+          ->Option.getWithDefault(""),
+          d2
+          ->parentNodeId
+          ->Option.map(PID.toString)
+          ->Option.getWithDefault(""),
+        )
+      })
+    ->List.fromArray;
+  [%log.debug
+    "INPUT:\n"
+    ++ (
+      sortedData->List.map(d =>
+        d->nodeId->ID.toString
+        ++ ": "
+        ++ d
+           ->parentNodeId
+           ->Option.map(PID.toString)
+           ->Option.getWithDefault("ROOT")
+      )
+      |> String.concat("\n")
+    );
+    ("", "")
+  ];
+  switch (sortedData) {
+  | [root, ...unsorted] =>
+    let ret =
+      [root, ..._auxTopoSort(root, unsorted, nodeId, parentNodeId)]
+      ->List.toArray;
+    [%log.debug
+      "OUTPUT:\n"
+      ++ (
+        ret
+        ->List.fromArray
+        ->List.map(d =>
+            d->nodeId->ID.toString
+            ++ ": "
+            ++ d
+               ->parentNodeId
+               ->Option.map(PID.toString)
+               ->Option.getWithDefault("ROOT")
+          )
+        |> String.concat("\n")
+      );
+      ("", "")
+    ];
+
+    ret;
+  | [] => [||]
+  };
+};
+
+let fromArray =
+    (data: array('a), nodeId: 'a => ID.t, parentNodeId: 'a => option(PID.t)) => {
+  data->Array.size == 0
+    ? empty()
+    : topoSort(data, nodeId, parentNodeId)
+      ->Array.reduceWithIndex(
+          empty(),
+          (graph, d, i) => {
+            [%log.debug
+              "adding node ["
+              ++ d->nodeId->ID.toString
+              ++ "] with parent ["
+              ++ d
+                 ->parentNodeId
+                 ->Option.map(PID.toString)
+                 ->Option.getWithDefault("")
+              ++ "]";
+              ("", "")
+            ];
+            if (i == 0) {
+              graph->addNode(d->nodeId, d);
+            } else {
+              graph->addNodeUnder(
+                d->nodeId,
+                d,
+                d->parentNodeId->Option.getExn,
+              );
+            };
+          },
+        );
 };

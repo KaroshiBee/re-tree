@@ -21,6 +21,7 @@ module type GRAPH = {
   let maxDepth: (t('a), ID.t) => int;
   let setDataForNode: (t('a), ID.t, 'a => 'a) => t('a);
   let subGraphForNode: (t('a), ID.t) => option(t('a));
+  let childIdsOfRoot: t('a) => list(ID.t);
   let childrenOfRoot: t('a) => list(t('a));
   let addNodeAtPath: (t('a), ID.t, 'a, P.t) => t('a);
   let addNode: (t('a), ID.t, 'a) => t('a);
@@ -36,9 +37,10 @@ module type GRAPH = {
   let updateChildren: (t('a), ID.t, 'a => 'a) => t('a);
   let forEach: (t('a), (ID.t, 'a) => unit) => unit;
   let keep: (t('a), (ID.t, 'a) => bool) => t('a);
-  let toArray: t('a) => array('a);
-  let toKeyValueArray: t('a) => array((ID.t, 'a));
   let toKeyValueArrayWithPaths: t('a) => array((ID.t, P.t, 'a));
+  let toKeyValueArray: t('a) => array((ID.t, 'a));
+  let toArray: t('a) => array('a);
+  let fromArray: (array('a), 'a => ID.t, 'a => option(PID.t)) => t('a);
 };
 
 module T: GRAPH = {
