@@ -13,7 +13,6 @@ module Make = (()) => {
         ? id
         : {
           raise(Empty_id);
-          id;
         };
     let toString = s => s;
   };
