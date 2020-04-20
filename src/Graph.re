@@ -1,9 +1,9 @@
-module I = Retree_Identity;
+module I = Identity;
 module ID = I.FocusId;
 module PID = I.ParentId;
 module CID = I.ChildId;
-module P = Retree_Path.T;
-module IDTree = Retree_IDTree.T;
+module P = Path.T;
+module IDTree = IDTree.T;
 
 module type GRAPH = {
   type t('a);

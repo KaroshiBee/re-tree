@@ -1,12 +1,12 @@
 open BsMocha.Mocha;
 module Assert = BsMocha.Assert;
 
-module M = Retree.Graph.T;
-module I = Retree.Identity;
+module M = Graph.T;
+module I = Identity;
 module ID = I.FocusId;
 module CID = I.ChildId;
 module PID = I.ParentId;
-module P = Retree.Path.T;
+module P = Path.T;
 
 type data = {
   one: int,
@@ -21,9 +21,21 @@ let id4 = ID.create("4");
 let makeGraph = () => {
   M.empty()
   ->M.addNode(id1, {one: 1, two: "one"})
-  ->M.addNodeUnder(id2, {one: 2, two: "two"}, id1->I.convertFocusToParent)
-  ->M.addNodeUnder(id3, {one: 3, two: "three"}, id1->I.convertFocusToParent)
-  ->M.addNodeUnder(id4, {one: 4, two: "four"}, id3->I.convertFocusToParent);
+  ->M.addNodeUnder(
+      id2,
+      {one: 2, two: "two"},
+      id1->Identity.convertFocusToParent,
+    )
+  ->M.addNodeUnder(
+      id3,
+      {one: 3, two: "three"},
+      id1->Identity.convertFocusToParent,
+    )
+  ->M.addNodeUnder(
+      id4,
+      {one: 4, two: "four"},
+      id3->Identity.convertFocusToParent,
+    );
 };
 
 describe("canMakeEmpty", () => {

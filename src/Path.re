@@ -1,4 +1,4 @@
-module PID = Retree_Identity.ParentId;
+module PID = Identity.ParentId;
 
 module type PATH = {
   type el;

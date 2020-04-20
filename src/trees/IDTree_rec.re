@@ -1,7 +1,7 @@
-module I = Retree_Identity;
+module I = Identity;
 module ID = I.FocusId;
 module CID = I.ChildId;
-module P = Retree_Path.T;
+module P = Path.T;
 
 type children = CID.Map.t(t)
 and t = {
@@ -368,19 +368,15 @@ let removeSubtree = (tree: t, path: P.t, child: CID.t): t => {
 };
 
 let eq = (expected, actual) => {
-  let eIds =
-    expected
-    ->getAllPaths
-    ->SortArray.stableSortBy((x, y) => {
-        compare(x->fst->CID.toString, y->fst->CID.toString)
-      });
-  let aIds =
-    actual
-    ->getAllPaths
-    ->SortArray.stableSortBy((x, y) => {
-        compare(x->fst->CID.toString, y->fst->CID.toString)
-      });
+  let eIds = expected->getAllPaths->SortArray.stableSortBy( (x, y) => {
+    compare(x->fst->CID.toString, y->fst->CID.toString)
+  });
+  let aIds = actual->getAllPaths->SortArray.stableSortBy( (x, y) => {
+    compare(x->fst->CID.toString, y->fst->CID.toString)
+  });
   eIds->Array.eq(aIds, (x, y) => {
-    x->fst->CID.toString == y->fst->CID.toString && x->snd->P.eq(y->snd)
+    x->fst->CID.toString == y->fst->CID.toString &&
+      x->snd->P.eq(y->snd);
   });
 };
+

@@ -1,4 +1,4 @@
-module PID = Retree_Identity.ParentId;
+module PID = Identity.ParentId;
 
 type el = PID.t;
 type t = {pathUp: list(el)};

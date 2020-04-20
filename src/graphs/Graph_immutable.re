@@ -1,9 +1,9 @@
-module I = Retree_Identity;
+module I = Identity;
 module ID = I.FocusId;
 module PID = I.ParentId;
 module CID = I.ChildId;
-module P = Retree_Path.T;
-module IDTree = Retree_IDTree.T;
+module P = Path.T;
+module IDTree = IDTree.T;
 
 type dataWithPath('a) = {
   pathUp: P.t,
@@ -407,7 +407,7 @@ let setSubGraphForRoot =
 };
 
 let moveSubtree = (graph: t('a), from: CID.t, under: PID.t) => {
-  let id = from->I.convertChildToFocus;
+  let id = from->Identity.convertChildToFocus;
   let pid = under->I.convertParentToFocus;
   let masterLookup = graph.masterLookup;
   switch (graph->containsId(id), graph->containsId(pid)) {
