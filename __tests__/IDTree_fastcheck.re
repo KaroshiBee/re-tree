@@ -4,12 +4,12 @@ open BsFastCheck.Arbitrary;
 open BsFastCheck.Property.Sync;
 open BsFastCheck.Arbitrary.Combinators;
 
-module M = IDTree.T;
-module I = Identity;
+module M = Retree.IDTree.T;
+module I = Retree.Identity;
 module ID = I.FocusId;
 module CID = I.ChildId;
 module PID = I.ParentId;
-module P = Path.T;
+module P = Retree.Path.T;
 
 module IDs = ID_fastcheck.Arbitrary;
 module Paths = Path_fastcheck.Arbitrary;
@@ -44,78 +44,73 @@ module Arbitrary = {
   // generate fingery trees - lots of straight down deep branches
   // NOTE i dont mean finger-trees
   let fingersN_ = (n, empty) =>
-    tuple2(
-      IDs.id,
-      Paths.paths(n, 10)
-    )
+    tuple2(IDs.id, Paths.paths(n, 10))
     ->Derive.map(tup => {
         let id = tup->fst;
         let ls = tup->snd;
-        ls->List.reduce(
-          empty,
-          (t, pth) => {
-            t->M.addChild(pth, id);
-          },
-        );
+        ls->List.reduce(empty, (t, pth) => {t->M.addChild(pth, id)});
       });
 
   let fingersN = n => fingersN_(n, M.empty());
-  let fingersN_subtree = (n, name) => fingersN_(n, M.emptySubtree(name->ID.create));
+  let fingersN_subtree = (n, name) =>
+    fingersN_(n, M.emptySubtree(name->ID.create));
 };
 
 module Utils = {
   let equalMaps = (expected, actual) => {
-    expected->Map.eq(actual, (x, y) => {
-      x->M.toString == y->M.toString
-    });
+    expected->Map.eq(actual, (x, y) => {x->M.toString == y->M.toString});
   };
-}
+};
 
 describe("IDTree: construction", () => {
   it("constructs", () => {
-    assertProperty1(
-      Arbitrary.fingersN(4),
-      t => {
-//        [%log.debug "tree: " ++ t->M.toString; ("", "")];
-        t->M.getAllIds->Array.size > 0;
-      },
-    )
+    assertProperty1(Arbitrary.fingersN(4), t => {
+      //        [%log.debug "tree: " ++ t->M.toString; ("", "")];
+      t->M.getAllIds->Array.size > 0
+    })
   })
 });
 
 describe("IDTree: removing nodes", () => {
-  let remove = (n, remover)  => assertProperty1(
+  let remove = (n, remover) =>
+    assertProperty1(
       Arbitrary.fingersN(n),
       t => {
         /* [%log.debug "before: " ++ t->M.toString; ("", "")]; */
         let ids = M.getAllPaths(t);
-        let t1 = ids->Array.reduce(t, (tree, cpath) => {
-          let cid = cpath->fst;
-          let pth = cpath->snd;
-          /* [%log.debug cid->CID.toString ++ ": " ++ pth->P.toString; ("","")]; */
-          tree->remover(pth, cid);
-        });
+        let t1 =
+          ids->Array.reduce(
+            t,
+            (tree, cpath) => {
+              let cid = cpath->fst;
+              let pth = cpath->snd;
+              /* [%log.debug cid->CID.toString ++ ": " ++ pth->P.toString; ("","")]; */
+              tree->remover(pth, cid);
+            },
+          );
         /* [%log.debug "after: " ++ t1->M.toString; ("", "")]; */
         t1->M.getAllIds->Array.size == 0;
-      });
+      },
+    );
 
   it("removing all children (small trees) should leave empty tree", () => {
-    remove(2, M.removeChild);
+    remove(2, M.removeChild)
   });
 
   it("removing all children (big trees) should leave empty tree", () => {
-    remove(10, M.removeChild);
+    remove(10, M.removeChild)
   });
 
   it("removing all subtrees (small trees) should leave empty tree", () => {
-    remove(2, M.removeSubtree);
+    remove(2, M.removeSubtree)
   });
 
   it("removing all subtrees (big trees) should leave empty tree", () => {
-    remove(10, M.removeSubtree);
+    remove(10, M.removeSubtree)
   });
 
-  let removeSubtree = (n, s1) => assertProperty1(
+  let removeSubtree = (n, s1) =>
+    assertProperty1(
       Arbitrary.fingersN_subtree(n, s1),
       t => {
         let expected = t->M.children;
@@ -127,100 +122,107 @@ describe("IDTree: removing nodes", () => {
         // [%log.debug "after: " ++ ttt->M.toString; ("", "")];
         let actual = ttt->M.children;
         Utils.equalMaps(expected, actual);
-      }
-  );
+      },
+    );
 
   it("removing child should bring subtree up a level (small)", () => {
-    removeSubtree(2, "test1");
+    removeSubtree(2, "test1")
   });
 
   it("removing child should bring subtree up a level (large)", () => {
-    removeSubtree(10, "test1");
+    removeSubtree(10, "test1")
   });
-
-})
+});
 
 describe("IDTree: removing then adding nodes/subtrees & vice versa", () => {
-  let removeThenAdd = (gen)  => {
-      gen->Derive.chain(t => {
+  let removeThenAdd = gen => {
+    gen
+    ->Derive.chain(t => {
         /* [%log.debug "before: " ++ t->M.toString; ("", "")]; */
-        let i = integerRange(1, t->M.getAllIds->Array.size-1);
-        tuple2(constant(t), i)
-      })->Derive.chain( ((t, i)) => {
+        let i = integerRange(1, t->M.getAllIds->Array.size - 1);
+        tuple2(constant(t), i);
+      })
+    ->Derive.chain(((t, i)) => {
         let (id, pth) = M.getAllPaths(t)->Array.getExn(i);
         let sub = t->M.getSubtree(pth, id->I.convertChildToFocus)->constant;
         let tt = t->M.removeSubtree(pth, id)->constant;
         tuple5(t->constant, id->constant, pth->constant, sub, tt);
-      })->Derive.chain( ((t, cid, pth, sub, tt)) => {
+      })
+    ->Derive.chain(((t, cid, pth, sub, tt)) => {
         /*[%log.debug "before: " ++ t->M.toString; ("", "")]; */
         let id = cid->I.convertChildToFocus;
-        tuple2(t->constant, tt->M.addSubtree(id, pth, sub->Option.getWithDefault(M.emptySubtree(id)))->constant);
+        tuple2(
+          t->constant,
+          tt
+          ->M.addSubtree(
+              id,
+              pth,
+              sub->Option.getWithDefault(M.emptySubtree(id)),
+            )
+          ->constant,
+        );
       });
   };
 
-    it("IDTree: remove then add back gives same as start", () => {
-      assertProperty1(
-        Arbitrary.fingersN(10)->removeThenAdd,
-        ((expected, actual)) => {
-          /* [%log.debug "expected: " ++ expected->M.toString; ("", "")]; */
-          /* [%log.debug "actual: " ++ actual->M.toString; ("", "")]; */
-          expected->M.eq(actual);
-        }
-      )
-    });
+  it("IDTree: remove then add back gives same as start", () => {
+    assertProperty1(
+      Arbitrary.fingersN(10)->removeThenAdd, ((expected, actual)) => {
+      /* [%log.debug "expected: " ++ expected->M.toString; ("", "")]; */
+      /* [%log.debug "actual: " ++ actual->M.toString; ("", "")]; */
+      expected->M.eq(actual)
+    })
+  });
 
-    it("IDTree: remove then add back gives same as start (small)", () => {
-      assertProperty1(
-        Arbitrary.fingersN(2)->removeThenAdd,
-        ((expected, actual)) => {
-          /* [%log.debug "expected: " ++ expected->M.toString; ("", "")]; */
-          /* [%log.debug "actual: " ++ actual->M.toString; ("", "")]; */
-          expected->M.eq(actual);
-        }
-      )
-    });
+  it("IDTree: remove then add back gives same as start (small)", () => {
+    assertProperty1(
+      Arbitrary.fingersN(2)->removeThenAdd, ((expected, actual)) => {
+      /* [%log.debug "expected: " ++ expected->M.toString; ("", "")]; */
+      /* [%log.debug "actual: " ++ actual->M.toString; ("", "")]; */
+      expected->M.eq(actual)
+    })
+  });
 
   // NOTE remove then add child is not same as start as children of child get moved up
 
   let addThenRemove = (gen, n) => {
-    gen->Derive.chain(t => {
-      /* [%log.debug "before: " ++ t->M.toString; ("", "")]; */
-      let i = integerRange(1, t->M.getAllIds->Array.size-1);
-      tuple2(t->constant, i)
-    })->Derive.chain( ((t, i)) => {
-      let (_id, pth) = M.getAllPaths(t)->Array.getExn(i);
-      tuple3(t->constant, IDs.id, pth->constant)
-    })->Derive.chain( ((t, id, pth)) => {
-      let tt = Arbitrary.fingersN_subtree(n, id->ID.toString);
-      tuple4(t->constant, id->constant, pth->constant, tt)
-    })->Derive.chain( ((t, id, pth, tt)) => {
-      let ttt = t->M.addSubtree(id, pth, tt);
-      tuple4(t->constant, id->constant, pth->constant, ttt->constant)
-    })->Derive.chain( ((t, id, pth, _tt)) => {
-      let tt = t->M.removeSubtree(pth, id->I.convertFocusToChild);
-      tuple2(t->constant, tt->constant)
-    });
-  }
-    it("IDTree: add then remove subtree gives same as start", () => {
-      assertProperty1(
-        Arbitrary.fingersN(10)->addThenRemove(10),
-        ((expected, actual)) => {
-          /* [%log.debug "expected: " ++ expected->M.toString; ("", "")]; */
-          /* [%log.debug "actual: " ++ actual->M.toString; ("", "")]; */
-          expected->M.eq(actual);
-        }
-      )
-    });
+    gen
+    ->Derive.chain(t => {
+        /* [%log.debug "before: " ++ t->M.toString; ("", "")]; */
+        let i = integerRange(1, t->M.getAllIds->Array.size - 1);
+        tuple2(t->constant, i);
+      })
+    ->Derive.chain(((t, i)) => {
+        let (_id, pth) = M.getAllPaths(t)->Array.getExn(i);
+        tuple3(t->constant, IDs.id, pth->constant);
+      })
+    ->Derive.chain(((t, id, pth)) => {
+        let tt = Arbitrary.fingersN_subtree(n, id->ID.toString);
+        tuple4(t->constant, id->constant, pth->constant, tt);
+      })
+    ->Derive.chain(((t, id, pth, tt)) => {
+        let ttt = t->M.addSubtree(id, pth, tt);
+        tuple4(t->constant, id->constant, pth->constant, ttt->constant);
+      })
+    ->Derive.chain(((t, id, pth, _tt)) => {
+        let tt = t->M.removeSubtree(pth, id->I.convertFocusToChild);
+        tuple2(t->constant, tt->constant);
+      });
+  };
+  it("IDTree: add then remove subtree gives same as start", () => {
+    assertProperty1(
+      Arbitrary.fingersN(10)->addThenRemove(10), ((expected, actual)) => {
+      /* [%log.debug "expected: " ++ expected->M.toString; ("", "")]; */
+      /* [%log.debug "actual: " ++ actual->M.toString; ("", "")]; */
+      expected->M.eq(actual)
+    })
+  });
 
-    it("IDTree: add then remove subtree gives same as start (small)", () => {
-      assertProperty1(
-        Arbitrary.fingersN(2)->addThenRemove(2),
-        ((expected, actual)) => {
-          /* [%log.debug "expected: " ++ expected->M.toString; ("", "")]; */
-          /* [%log.debug "actual: " ++ actual->M.toString; ("", "")]; */
-          expected->M.eq(actual);
-        }
-      )
-    });
-
-})
+  it("IDTree: add then remove subtree gives same as start (small)", () => {
+    assertProperty1(
+      Arbitrary.fingersN(2)->addThenRemove(2), ((expected, actual)) => {
+      /* [%log.debug "expected: " ++ expected->M.toString; ("", "")]; */
+      /* [%log.debug "actual: " ++ actual->M.toString; ("", "")]; */
+      expected->M.eq(actual)
+    })
+  });
+});

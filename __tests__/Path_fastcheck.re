@@ -3,7 +3,9 @@ open BsFastCheck.Arbitrary;
 open BsFastCheck.Property.Sync;
 open BsFastCheck.Arbitrary.Combinators;
 
-module M = Path.T;
+module I = Retree.Identity;
+module PID = I.ParentId;
+module M = Retree.Path.T;
 
 module IDs = ID_fastcheck.Arbitrary;
 
@@ -52,9 +54,9 @@ describe("Path: append-remove", () => {
       IDs.pid,
       list(idString),
       (pid, ls_) => {
-        let s = pid->Path.PID.toString;
+        let s = pid->PID.toString;
         let ls = ls_->List.keep(l => l != s);
-        //        [%log.debug pid->Path.PID.toString; ("", "")];
+        //        [%log.debug pid->PID.toString; ("", "")];
         let pth1 = M.fromList(ls)->M.append(pid)->M.removeElement(pid);
         //        [%log.debug pth1->M.toString; ("", "")];
         let pth2 = M.fromList(ls);
@@ -79,9 +81,9 @@ describe("Path: append-remove", () => {
       IDs.pid,
       list(idString),
       (pid, ls_) => {
-        let s = pid->Path.PID.toString;
+        let s = pid->PID.toString;
         let ls = ls_->List.keep(l => l != s);
-        //        [%log.debug pid->Path.PID.toString; ("", "")];
+        //        [%log.debug pid->PID.toString; ("", "")];
         let pth1 =
           M.fromList([s, ...ls])->M.removeElement(pid)->M.append(pid);
         //        [%log.debug pth1->M.toString; ("", "")];
@@ -109,11 +111,11 @@ describe("Path: append-remove", () => {
       list(idString),
       list(idString),
       (pid, ls1, ls2, ls3) => {
-        let s = pid->Path.PID.toString;
+        let s = pid->PID.toString;
         let ls1 = ls1->List.keep(l => l != s);
         let ls2 = ls2->List.keep(l => l != s);
         let ls3 = ls3->List.keep(l => l != s);
-        //        [%log.debug pid->Path.PID.toString; ("", "")];
+        //        [%log.debug pid->PID.toString; ("", "")];
         let pth1 =
           M.fromList(List.concatMany([|ls1, [s], ls2, [s], ls3|]))
           ->M.removeElement(pid);
@@ -136,7 +138,7 @@ describe("Path: root/parent/moveup", () => {
         // NOTE root to path  here
         let pth = M.fromRootToPathList([s, ...ls]);
         let root = pth->M.root->Option.getExn;
-        root->Path.PID.toString == s;
+        root->PID.toString == s;
       },
     )
   });
@@ -149,11 +151,11 @@ describe("Path: root/parent/moveup", () => {
         // NOTE path to root here
         let pth = M.fromPathToRootList([s, ...ls]);
         let parent = pth->M.parent->Option.getExn;
-        let e = parent->Path.PID.toString == s;
+        let e = parent->PID.toString == s;
         /* [%log.debug */
         /*   pth->M.toString */
         /*   ++ " with parent: " */
-        /*   ++ parent->Path.PID.toString */
+        /*   ++ parent->PID.toString */
         /*   ++ " is ok " */
         /*   ++ e->string_of_bool; */
         /*   ("", "") */
@@ -176,7 +178,7 @@ describe("Path: root/parent/moveup", () => {
         /* [%log.debug */
         /*   pth->M.toString */
         /*   ++ " with parent: " */
-        /*   ++ parent->Path.PID.toString */
+        /*   ++ parent->PID.toString */
         /*   ++ " is ok " */
         /*   ++ e->string_of_bool; */
         /*   ("", "") */
@@ -189,8 +191,11 @@ describe("Path: root/parent/moveup", () => {
 
 module Arbitrary = {
   // at most n length path
-  let path = n => setWithLength(IDs.idString, 1, n, ~comparator=(==))->Derive.map(s => s->List.fromArray->M.fromList);
+  let path = n =>
+    setWithLength(IDs.idString, 1, n, ~comparator=(==))
+    ->Derive.map(s => s->List.fromArray->M.fromList);
   // at most m paths of length at least n
-  let paths = (n, m) => setWithLength(path(n), 1, m, ~comparator=M.eq)->Derive.map(s => s->List.fromArray);
-
+  let paths = (n, m) =>
+    setWithLength(path(n), 1, m, ~comparator=M.eq)
+    ->Derive.map(s => s->List.fromArray);
 };

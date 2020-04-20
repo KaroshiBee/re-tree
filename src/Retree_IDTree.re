@@ -1,7 +1,7 @@
-module I = Identity;
+module I = Retree_Identity;
 module ID = I.FocusId;
 module CID = I.ChildId;
-module P = Path.T;
+module P = Retree_Path.T;
 
 /*
  for confusion with addSubtree and ID.t:

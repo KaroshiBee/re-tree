@@ -3,12 +3,12 @@ open BsFastCheck.Arbitrary;
 open BsFastCheck.Property.Sync;
 open BsFastCheck.Arbitrary.Combinators;
 
-module M = Graph.T;
-module I = Identity;
+module M = Retree.Graph.T;
+module I = Retree.Identity;
 module ID = I.FocusId;
 module CID = I.ChildId;
 module PID = I.ParentId;
-module P = Path.T;
+module P = Retree.Path.T;
 
 module IDs = ID_fastcheck.Arbitrary;
 module Paths = Path_fastcheck.Arbitrary;
