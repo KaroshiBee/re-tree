@@ -1,20 +1,20 @@
 {
   "name": "@karoshibee/re-tree",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A parent/child tree inspired by Atlassian ToolKit Tree",
   "scripts": {
     "build:bs": "BS_LOG=off bsb -clean-world -make-world",
     "build:bs:dev": "BS_LOG=*,re-tree=* bsb -clean-world -make-world",
-    "watch:bs": "BS_LOG=*,re-tree=* bsb -clean-world -make-world -w",
+    "watch:bs": "BS_LOG=off bsb -clean-world -make-world -w",
+    "watch:bs:dev": "BS_LOG=*,re-tree=* bsb -clean-world -make-world -w",
     "watch:test": "./node_modules/.bin/mocha __tests__/*_test.bs.js --watch",
-    "watch:fastcheck": "./node_modules/.bin/mocha __tests__/*_fastcheck.bs.js --watch",
+    "watch:fastcheck": "./node_modules/.bin/mocha __tests__/*_fastcheck.bs.js --watch --timeout 20000",
     "clean": "yarn run clean:bs && yarn run clean:dist",
     "clean:bs": "bsb -clean-world",
     "clean:dist": "rm -rf dist",
     "coverage": "nyc report --temp-directory=coverage --reporter=text-lcov | coveralls",
-    "mocha": "./node_modules/.bin/mocha __tests__/*_test.bs.js",
-    "test": "yarn run build:bs:dev && yarn run mocha",
-    "fastcheck": "./node_modules/.bin/mocha __tests__/*fastcheck.bs.js"
+    "test": "./node_modules/.bin/mocha __tests__/*_test.bs.js",
+    "fastcheck": "./node_modules/.bin/mocha __tests__/*fastcheck.bs.js --timeout 20000"
   },
   "keywords": [
     "BuckleScript"
@@ -37,10 +37,5 @@
     "bs-platform": "^7.0.1",
     "coveralls": "^3.0.9",
     "nyc": "^15.0.0"
-  },
-  "jest": {
-    "transformIgnorePatterns": [
-      "/node_modules/(?!@glennsl/bs-jest|bs-platform|bs-log|@glennsl/bs-json).+\\.js$"
-    ]
   }
 }

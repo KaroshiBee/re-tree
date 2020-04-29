@@ -31,88 +31,77 @@ module Arbitrary = {
 
   // a non-empty set of unique ID which will be the nodes
   let uniqueIds = maxSize => {
-    arrayWithLength(IDs.id, 2, maxSize)
-    ->Derive.map(s => s->ID.Set.fromArray->Set.toArray);
+    setWithLength(IDs.id, 2, maxSize, ~comparator=(a, b) => {
+      String.equal(a->ID.toString, b->ID.toString)
+    })
+    ->Derive.map(arr =>
+        arr->Array.reduce(
+          MutableStack.make(),
+          (st, el) => {
+            st->MutableStack.push(el);
+            st;
+          },
+        )
+      );
   };
 
-  let _genParentChildrenPairs = (parent: int, first, last) => {
-    let children = Array.range(first, last - 1);
-    let ps = Array.make(children->Array.size, Some(parent));
-    Array.zip(children, ps)->constant;
-  };
-
-  let genParentChildrenPairs = (maxChildren, layers) => {
-    let rec _aux = (newStart, count) => {
-      count < 1
-        ? [[|(0, None)|]]->constant
-        : {
-          integerRange(1, maxChildren)
-          ->Derive.chain(n => {
-              _genParentChildrenPairs(
-                newStart,
-                newStart + 1,
-                newStart + 1 + n,
-              )
-            })
-          ->Derive.chain(arr => {
-              let n = arr->Array.size;
-              _aux(n, count - 1)->Derive.map(rest => {[arr, ...rest]});
-            });
-        };
-    };
-    _aux(0, layers)->Derive.map(l => l->List.toArray->Array.concatMany);
-  };
-
-  let graphData =
-    genParentChildrenPairs(4, 10)
-    ->Derive.chain(idParents => {
-        let n = idParents->Array.size;
-        data
-        ->arrayWithLength(n, n)
-        ->Derive.map(ds =>
-            ds->Array.zipBy(
-              idParents,
-              (d, idParent) => {
-                let (id, pid) = idParent;
-                [%log.debug
-                  "graphData: "
-                  ++ id->string_of_int
-                  ++ ", "
-                  ++ pid
-                     ->Option.map(string_of_int)
-                     ->Option.getWithDefault("");
-                  ("", "")
-                ];
-                {
-                  nodeId: id->string_of_int->ID.create,
-                  parentNodeId:
-                    pid->Option.map(string_of_int)->Option.map(PID.create),
-                  data: d,
-                };
-              },
-            )
-          );
+  let randomGraph = maxSize => {
+    uniqueIds(maxSize)
+    ->Derive.chain(dst => {
+        [%log.debug
+          "size: " ++ dst->MutableStack.size->string_of_int;
+          ("", "")
+        ];
+        let g = M.empty()->ref;
+        let src = [|dst->MutableStack.pop->Option.getExn|]->ref;
+        dst->MutableStack.dynamicPopIter(b => {
+          let a = (src^)->Array.shuffle->Array.getExn(0);
+          (g^)->M.containsId(a)
+            ? g := (g^)->M.addNodeUnder(b, None, a->I.convertFocusToParent)
+            : g :=
+                (g^)
+                ->M.addNode(a, None)
+                ->M.addNodeUnder(b, None, a->I.convertFocusToParent);
+          src := (src^)->Array.concat([|b|]);
+        });
+        [%log.debug "size: " ++ (g^)->M.size->string_of_int; ("", "")];
+        let arr = (g^)->M.toKeyValueArrayWithPaths;
+        data->Derive.map(d => {
+          arr->Array.reduce(
+            M.empty(),
+            (gg, (nodeId, pth, _o)) => {
+              let parentNodeId = pth->P.parent;
+              gg->M.addNodeAtPath(
+                nodeId,
+                {nodeId, parentNodeId, data: d},
+                pth,
+              );
+            },
+          )
+        });
       });
+  };
 };
 
 describe("Graph: construction", () => {
-  it("fromArray -> toArray gives same data", () => {
+  it("toArray -> fromArray -> toArray gives same data", () => {
     assertProperty1(
-      Arbitrary.graphData,
-      arr => {
-        //        [%log.debug "tree: " ++ t->M.toString; ("", "")];
-        let g = arr->M.fromArray(o => o.nodeId, o => o.parentNodeId);
-        let arr2 = g->M.toArray;
+      Arbitrary.randomGraph(1000),
+      g => {
+        let arr1 = g->M.toArray;
         let expected =
-          arr->SortArray.stableSortBy((x, y) => {
+          arr1->SortArray.stableSortBy((x, y) => {
             Pervasives.compare(x.nodeId, y.nodeId)
           });
         let actual =
-          arr2->SortArray.stableSortBy((x, y) => {
-            Pervasives.compare(x.nodeId, y.nodeId)
-          });
+          arr1
+          ->M.fromArray(o => o.nodeId, o => o.parentNodeId)
+          ->M.toArray
+          ->SortArray.stableSortBy((x, y) => {
+              Pervasives.compare(x.nodeId, y.nodeId)
+            });
         expected->Array.eq(actual, (x, y) => {
-          x.nodeId->ID.toString == y.nodeId->ID.toString
+          x.nodeId->ID.toString >= y.nodeId->ID.toString
           && x.parentNodeId
              ->Option.eq(y.parentNodeId, (xx, yy) => {
                  xx->PID.toString == yy->PID.toString
@@ -125,39 +114,3 @@ describe("Graph: construction", () => {
     )
   })
 });
-
-/* let counterexample = [ */
-/*   [ */
-/*   {"nodeId":"53d096b5-cab5-487e-8f17-2e3a0dbf39dd", */
-/*    "parentNodeId":undefined, */
-/*    "data":{"a":0,"b":"","c":false}}, */
-/*   {"nodeId":"ae58854a-3256-478b-8029-dae2ebf3bfec", */
-/*    "parentNodeId":"ae58854a-3256-478b-8029-dae2ebf3bfec", */
-/*    "data":{"a":-2008096949,"b":"M","c":false}}, */
-/*   {"nodeId":"a7908541-04bd-4e26-993a-6aba6a7e7de8", */
-/*    "parentNodeId":"ae58854a-3256-478b-8029-dae2ebf3bfec", */
-/*    "data":{"a":858015518,"b":"%","c":false}}] */
-/* ] */
-
-/* Counterexample: [[{"nodeId":"5efb98dd-01f9-4bac-a7bf-e9e557c39419", */
-/*                    "parentNodeId":undefined, */
-/*                    "data":{"a":0,"b":"","c":false}}, */
-/*                   {"nodeId":"975c725f-1139-434b-9bad-0c080cdf9f02", */
-/*                    "parentNodeId":"975c725f-1139-434b-9bad-0c080cdf9f02", */
-/*                    "data":{"a":13,"b":"$3#","c":false}}, */
-/*                   {"nodeId":"eef91312-8b76-4483-9fe1-ee5a20397705", */
-/*                    "parentNodeId":"5efb98dd-01f9-4bac-a7bf-e9e557c39419", */
-/*                    "data":{"a":-1746299436,"b":"w'O%z/eo>5","c":true}}]] */
-
-/* Counterexample: [[{"nodeId":"2b298e57-fb97-439d-9158-c10bb1b73204", */
-/*                    "parentNodeId":undefined, */
-/*                    "data":{"a":0,"b":"","c":false}}, */
-/*                   {"nodeId":"5ad510c7-d71d-4c8e-b818-f491b530cef9", */
-/*                    "parentNodeId":"9092f443-361d-4882-9172-e5072c35c581", */
-/*                    "data":{"a":-1727639346,"b":"];y,","c":true}}, */
-/*                   {"nodeId":"9092f443-361d-4882-9172-e5072c35c581", */
-/*                    "parentNodeId":"5ad510c7-d71d-4c8e-b818-f491b530cef9", */
-/*                    "data":{"a":-2042665511,"b":"","c":true}}, */
-/*                   {"nodeId":"aebbbe54-56a6-4b8a-a1bf-6704ccd21f18", */
-/*                    "parentNodeId":"2b298e57-fb97-439d-9158-c10bb1b73204", */
-/*                    "data":{"a":480790877,"b":"cB^h","c":true}}]] */
