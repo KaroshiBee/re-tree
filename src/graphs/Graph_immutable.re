@@ -178,6 +178,40 @@ let childrenOfRoot = (graph: t('a)): list(t('a)) => {
     });
 };
 
+let childIds = (graph: t('a), id: ID.t): list(ID.t) => {
+  switch (graph->subGraphForNode(id)) {
+  | Some(g) =>
+    g.tree
+    ->IDTree.children
+    ->Map.keysToArray
+    ->List.fromArray
+    ->List.map(I.convertChildToFocus)
+  | None => []
+  };
+};
+
+let children = (graph: t('a), id: ID.t): list(t('a)) => {
+  graph
+  ->childIds(id)
+  ->List.reduce([], (trees, id) => {
+      switch (graph->subGraphForNode(id)) {
+      | Some(t) => [t, ...trees]
+      | None => trees
+      }
+    });
+};
+
+let childData = (graph: t('a), id: ID.t): list('a) => {
+  graph
+  ->childIds(id)
+  ->List.reduce([], (data, id) => {
+      switch (graph->dataForNode(id)) {
+      | Some(d) => [d, ...data]
+      | None => data
+      }
+    });
+};
+
 let addNodeAtPath = (graph: t('a), id: ID.t, data: 'a, path: P.t): t('a) => {
   let tree = graph.tree->IDTree.addChild(path, id);
   let masterLookup =
