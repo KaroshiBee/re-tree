@@ -366,12 +366,13 @@ describe("setSubGraphForNode-should-set-subgraph", () => {
   let id6 = ID.create("6");
   let gChild =
     M.empty()
-    ->M.addNode(id5, {one: 5, two: "five"})
-    ->M.addNode(id6, {one: 6, two: "six"});
+    ->M.addNode(id2, {one: 22222, two: "ASdasdasda"})
+    ->M.addNodeUnder(id5, {one: 5, two: "five"}, id2->I.convertFocusToParent)
+    ->M.addNodeUnder(id6, {one: 6, two: "six"}, id2->I.convertFocusToParent);
   _test(gChild, "5");
   _test(gChild, "6");
   [%log.debug "about to set new subgraph"; ("", "")];
-  switch (g->M.setSubGraphForNode(id2->I.convertFocusToParent, id2, gChild)) {
+  switch (g->M.setSubGraphForNode(id2->I.convertFocusToParent, gChild)) {
   | Ok(g1) =>
     _test(g1, "5");
     _test(g1, "6");

@@ -32,9 +32,8 @@ module type GRAPH = {
   let removeNode: (t('a), ID.t) => Result.t(t('a), string);
   let moveChild: (t('a), CID.t, PID.t) => Result.t(t('a), string);
   let removeSubtree: (t('a), ID.t) => Result.t(t('a), string);
-  let setSubGraphForNode:
-    (t('a), PID.t, ID.t, t('a)) => Result.t(t('a), string);
-  let setSubGraphForRoot: (t('a), ID.t, t('a)) => Result.t(t('a), string);
+  let setSubGraphForNode: (t('a), PID.t, t('a)) => Result.t(t('a), string);
+  let setSubGraphForRoot: (t('a), t('a)) => Result.t(t('a), string);
   let moveSubtree: (t('a), CID.t, PID.t) => Result.t(t('a), string);
   let map: (t('a), 'a => 'b) => t('b);
   let updateChildren: (t('a), ID.t, 'a => 'a) => t('a);
