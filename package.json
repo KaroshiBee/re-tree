@@ -1,6 +1,6 @@
 {
   "name": "@karoshibee/re-tree",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "A parent/child tree inspired by Atlassian ToolKit Tree",
   "scripts": {
     "build:bs": "BS_LOG=off bsb -clean-world -make-world",
