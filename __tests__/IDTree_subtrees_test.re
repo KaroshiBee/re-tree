@@ -1,27 +1,13 @@
 open BsMocha.Mocha;
 module Assert = BsMocha.Assert;
-
-module M = IDTree.T;
-module I = Identity;
-module ID = I.FocusId;
-module CID = I.ChildId;
-module PID = I.ParentId;
-module P = Path.T;
+open Test_utils;
 
 describe("subtrees", () => {
-  let path1 = P.fromRootToPathList(["2", "1", "a"]);
-  let path2 = P.fromRootToPathList(["2", "1", "b"]);
-  let path3 = P.fromRootToPathList(["2", "c"]);
-  let id1 = ID.create("child1");
-  let id2 = ID.create("child2");
-  let id3 = ID.create("child3");
-  let t =
-    M.empty()
-    ->M.addChild(path1, id1)
-    ->M.addChild(path2, id2)
-    ->M.addChild(path3, id3);
-
-  let t1 = t->M.getSubtree(path1->P.moveUp, ID.create("a"))->Option.getExn;
+  let t = StandardTree.t;
+  let t1 =
+    t
+    ->M.getSubtree(StandardTree.path1->P.moveUp, ID.create("a"))
+    ->Option.getExn;
   it("gotSubtree", () => {
     t1->M.myId == ID.create("a") |> Assert.equal(true)
   });
@@ -42,7 +28,7 @@ describe("subtrees", () => {
 
   let t1 =
     t
-    ->M.getSubtree(path1->P.moveUp->P.moveUp, ID.create("1"))
+    ->M.getSubtree(StandardTree.path1->P.moveUp->P.moveUp, ID.create("1"))
     ->Option.getExn;
   it("gotSubtree2", () => {
     t1->M.myId == ID.create("1") |> Assert.equal(true)
@@ -61,32 +47,12 @@ describe("subtrees", () => {
 });
 
 describe("addSubtree", () => {
-  let path1 = P.fromRootToPathList(["2", "1", "a"]);
-  let path2 = P.fromRootToPathList(["2", "1", "b"]);
-  let path3 = P.fromRootToPathList(["2", "c"]);
-  let id1 = ID.create("child1");
-  let id2 = ID.create("child2");
-  let id3 = ID.create("child3");
-  let t =
-    M.empty()
-    ->M.addChild(path1, id1)
-    ->M.addChild(path2, id2)
-    ->M.addChild(path3, id3);
-  [%log.debug "t: " ++ t->M.toString; ("", "")];
+  let t = StandardTree.t;
+  let t2 = StandardTree.t2;
 
-  let path4 = P.fromRootToPathList(["3", "a"]);
-  let path5 = P.fromRootToPathList(["3", "b"]);
-  let id4 = ID.create("child4");
-  let id5 = ID.create("child5");
-  let id6 = ID.create("child6");
-  let t2 =
-    M.empty()
-    ->M.addChild(path4, id4)
-    ->M.addChild(path4, id5)
-    ->M.addChild(path5, id6);
   [%log.debug "t2: " ++ t2->M.toString; ("", "")];
 
-  let t3 = t->M.addSubtree(ID.create("test"), path3, t2);
+  let t3 = t->M.addSubtree(ID.create("test"), StandardTree.path3, t2);
   [%log.debug "t3: " ++ t3->M.toString; ("", "")];
   let t4 =
     t3
@@ -129,19 +95,13 @@ describe("addSubtree", () => {
 });
 
 describe("removeSubtree", () => {
-  let path1 = P.fromRootToPathList(["2", "1", "a"]);
-  let path2 = P.fromRootToPathList(["2", "1", "b"]);
-  let path3 = P.fromRootToPathList(["2", "c"]);
-  let id1 = ID.create("child1");
-  let id2 = ID.create("child2");
-  let id3 = ID.create("child3");
-  let t =
-    M.empty()
-    ->M.addChild(path1, id1)
-    ->M.addChild(path2, id2)
-    ->M.addChild(path3, id3);
+  let t = StandardTree.t;
 
-  let t1 = t->M.removeSubtree(path1->P.moveUp->P.moveUp, CID.create("1"));
+  let t1 =
+    t->M.removeSubtree(
+      StandardTree.path1->P.moveUp->P.moveUp,
+      CID.create("1"),
+    );
   let t2 = t1->M.children->Map.getExn(CID.create("2"));
   it("oneSubtreeRemoved", () => {
     t2->M.children->Map.size |> Assert.equal(1)

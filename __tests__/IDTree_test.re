@@ -1,12 +1,7 @@
 open BsMocha.Mocha;
 module Assert = BsMocha.Assert;
 
-module M = IDTree.T;
-module I = Identity;
-module ID = I.FocusId;
-module CID = I.ChildId;
-module PID = I.ParentId;
-module P = Path.T;
+open Test_utils;
 
 describe("canMakeEmpty", () => {
   let p = M.empty();
@@ -118,18 +113,7 @@ describe("addLowDownChildren", () => {
 });
 
 describe("addInnerChild", () => {
-  let path1 = P.fromRootToPathList(["2", "1", "a"]);
-  let path2 = P.fromRootToPathList(["2", "1", "b"]);
-  let path3 = P.fromRootToPathList(["2", "c"]);
-  let id1 = ID.create("child1");
-  let id2 = ID.create("child2");
-  let id3 = ID.create("child3");
-  let t =
-    M.empty()
-    ->M.addChild(path1, id1)
-    ->M.addChild(path2, id2)
-    ->M.addChild(path3, id3);
-
+  let t = StandardTree.t;
   let path4 = P.fromRootToPathList(["2", "d"]);
   let t2 = t->M.addChild(path4, ID.create("child4"));
   let t3 = t2->M.children->Map.getExn(CID.create("2"));
