@@ -9,6 +9,7 @@ module type PATH = {
   let fromPathToRootList: list(string) => t;
   let fromRootToPathList: list(string) => t;
   let moveUp: t => t;
+  let splitLast: t => (option(el), t);
   let parent: t => option(el);
   let root: t => option(el);
   let pathToRoot: t => list(el);

@@ -1,6 +1,7 @@
 module I = Identity;
 module ID = I.FocusId;
 module CID = I.ChildId;
+module PID = I.ParentId;
 module P = Path.T;
 
 type children = CID.Map.t(t)
@@ -191,102 +192,198 @@ let removeChild = (tree: t, path: P.t, child: CID.t): t => {
   aux(tree, pathFromRoot, x => {x});
 };
 
+let _stitchOnRoot = (subtree: t): t => {
+  subtree->isRoot
+    ? subtree
+    : {
+      let t = empty();
+      {
+        ...t,
+        children:
+          t->children->Map.set(subtree->myId->I.convertFocusToChild, subtree),
+      };
+    };
+    /* let children = */
+    /*   subtree */
+    /*   ->children */
+    /*   ->Map.reduce(t->children, (acc, cid, subtree') => { */
+    /*       acc->Map.set(cid, subtree') */
+    /*     }); */
+    /* {...t, children}; */
+};
+
 let _getSubtreeAtPath = (subtree: t, path: list(CID.t)): option(t) => {
-  /* %log.debug */
-  /* "current subtree: " ++ subtree->toSummaryString; */
-  /* %log.debug */
-  /* "rest of path: " ++ (path->List.map(CID.toString) |> String.concat(",")); */
-  let rec aux = (subtree, path, k) => {
-    switch (path) {
-    | [] => k(Some(subtree))
+  [%log.debug "current subtree: " ++ subtree->toString; ("", "")];
+  [%log.debug
+    "rest of path: " ++ (path->List.map(CID.toString) |> String.concat(","));
+    ("", "")
+  ];
+  let rec aux = (subtree', path', k) => {
+    switch (path') {
     | [cid, ...cids] =>
-      /* %log.debug */
-      /* "getting children for: " ++ cid->CID.toString; */
-      /* %log.debug */
-      /* "otherids: " ++ (cids->List.map(CID.toString) |> String.concat(",")); */
-      switch (subtree->children->Map.get(cid)) {
+      [%log.debug "getting children for: " ++ cid->CID.toString; ("", "")];
+      [%log.debug
+        "otherids: " ++ (cids->List.map(CID.toString) |> String.concat(","));
+        ("", "")
+      ];
+      switch (subtree'->children->Map.get(cid)) {
       | Some(c) => aux(c, cids, k)
-      | None => k(None)
-      }
+      | None =>
+        [%log.debug
+          "not found: "
+          ++ (path->List.map(CID.toString) |> String.concat(","));
+          ("", "")
+        ];
+        k(None);
+      };
+    | [] =>
+      [%log.debug
+        "found: "
+        ++ (path->List.map(CID.toString) |> String.concat(","))
+        ++ ", "
+        ++ subtree'->toString;
+        ("", "")
+      ];
+      k(Some(subtree'));
     };
   };
-  aux(subtree, path, x => {x});
+  let ret = aux(subtree, path, x => {x})->Option.map(_stitchOnRoot);
+  [%log.debug
+    "ret: "
+    ++ (path->List.map(CID.toString) |> String.concat(","))
+    ++ ", "
+    ++ ret->Option.map(toString)->Option.getWithDefault("none");
+    ("", "")
+  ];
+  ret;
 };
+
 // helper function that returns ALL the nodes including the root
-let _get = (subtree: t, path: P.t): list((CID.t, P.t)) => {
-  let rec aux = (id: ID.t, path: P.t, childList: list((CID.t, t)), k) => {
+let _get = (subtree: t): list((CID.t, P.t)) => {
+  let rec aux =
+          (id: CID.t, childList: list((CID.t, t)), accumulatedPath: P.t, k) => {
+    /* let (last, ppathIn) = pathIn->P.splitLast; */
+    /* let ppathOut = */
+    /*   switch (last) { */
+    /*   | Some(el) => pathOut->P.append(el) */
+    /*   | None => pathOut */
+    /*   }; */
     /* [%log.debug "CONT aux called with : " ++ id->ID.toString; ("", "")]; */
-    /* [%log.debug "CONT aux called with path: " ++ path->P.toString; ("", "")]; */
+    /* [%log.debug */
+    /*   "CONT aux called with pathIn: " */
+    /*   ++ pathIn->P.toString */
+    /*   ++ "->" */
+    /*   ++ ppathIn->P.toString; */
+    /*   ("", "") */
+    /* ]; */
+    /* [%log.debug */
+    /*   "CONT aux called with pathOut: " */
+    /*   ++ pathOut->P.toString */
+    /*   ++ "->" */
+    /*   ++ ppathOut->P.toString; */
+    /*   ("", "") */
+    /* ]; */
+    /* [%log.debug */
+    /*   "CONT aux called with children: " */
+    /*   ++ ( */
+    /*     childList->List.map(((cid, _)) => cid->CID.toString) */
+    /*     |> String.concat(",") */
+    /*   ); */
+    /*   ("", "") */
+    /* ]; */
     switch (childList) {
-    | [] =>
-//      let m = CID.Map.make();
-      let ppath = path->P.moveUp;
+    | [(cid, newsubtree), ...rest] =>
       /* [%log.debug */
-      /*   "CONT finished adding: " */
-      /*   ++ ppath->P.toString */
-      /*   ++ " to " */
-      /*   ++ id->ID.toString; */
+      /*   "CONT got cid: " */
+      /*   ++ cid->CID.toString */
+      /*   ++ " with new subtree: " */
+      /*   ++ newsubtree->toString; */
       /*   ("", "") */
       /* ]; */
-  //    k(m->Map.set(id->I.convertFocusToChild, ppath));
-k([(id->I.convertFocusToChild, ppath)]);
-    /* subtree->isRoot */
-    /*   ? { */
-    /*     [%log.debug "CONT found root"; ("", "")]; */
-    /*     k(m); */
-    /*   } */
-    /*   : { */
-    /*     [%log.debug */
-    /*     "CONT finished not root"; ("","")]; */
-    /*     k(m->Map.set(id->I.convertFocusToChild, path->P.moveUp)); */
-    /*   }; */
-    //base case
-    | [(cid, newsubtree), ...rest] =>
-      /* [%log.debug "CONT got cid: " ++ cid->CID.toString; ("", "")]; */
-      aux(
-        cid->I.convertChildToFocus,
-        path->P.append(cid->I.convertChildToParent),
-        newsubtree->children->Map.toList,
-        ret => {
-        /* [%log.debug "CONT recurse children list: "; ("", "")]; */
-        /* [%log.debug */
-        /*   "CONT ret map:" ++ ret->Map.size->string_of_int; */
-        /*   ("", "") */
-        /* ]; */
-        aux(id, path, rest, siblings => {
-          /* [%log.debug "CONT recurse sibling: "; ("", "")]; */
-          /* [%log.debug */
-          /*   "CONT sibling map:" ++ siblings->Map.size->string_of_int; */
-          /*   ("", "") */
-          /* ]; */
-          k(
-            List.concat(ret, siblings),
-//            ret->Map.mergeMany(siblings->Map.toArray),
-          )
+      let id' = cid;
+      let childList' = newsubtree->children->Map.toList;
+      let accumulatedPath' =
+        accumulatedPath->P.append(cid->I.convertChildToParent);
+      aux(id', childList', accumulatedPath', ret => {
+        aux(id, rest, accumulatedPath, siblings => {
+          k(List.concat(ret, siblings))
         })
-      })
-      //recurse over children
+      });
+
+    | [] =>
+      /* [%log.debug */
+      /*   "CONT finished: pathIn: " */
+      /*   ++ ppathIn->P.toString */
+      /*   ++ " pathOut: " */
+      /*   ++ ppathOut->P.toString */
+      /*   ++ " id " */
+      /*   ++ id->ID.toString */
+      /*   ++ ", original path: " */
+      /*   ++ path->P.toString; */
+      /*   ("", "") */
+      /* ]; */
+
+      k([(id, accumulatedPath->P.moveUp)])
     };
   };
-  aux(subtree->myId, path, subtree->children->Map.toList, x => {x});
+  aux(
+    _root->I.convertFocusToChild, subtree->children->Map.toList, P.empty(), x => {
+    x
+  });
 };
 
 let getChildPaths =
     (tree: t, path: P.t, inclusive: bool): array((CID.t, P.t)) => {
   // switch the path so that it goes from root -> node
+  [%log.debug "getChildPaths path: " ++ path->P.toString; ("", "")];
+  [%log.debug
+    "getChildPaths moveUp: " ++ path->P.moveUp->P.toString;
+    ("", "")
+  ];
+  [%log.debug
+    "getChildPaths parent: "
+    ++ path->P.parent->Option.map(PID.toString)->Option.getWithDefault("");
+    ("", "")
+  ];
   let pathFromRoot = path->P.pathFromRoot->List.map(I.convertParentToChild);
   switch (tree->_getSubtreeAtPath(pathFromRoot)) {
   | Some(subtree) =>
-    //    [%log.debug subtree->toString; ("", "")];
+    [%log.debug "getChildPaths subtree: " ++ subtree->toString; ("", "")];
     let ret =
-      _get(subtree, path)
+      _get(subtree)
       ->List.keep(tup => fst(tup) != _root->I.convertFocusToChild)
+      ->List.map(tup => {(tup->fst, tup->snd->P.concat(path->P.moveUp))})
       ->List.toArray;
-      /* _get(subtree, path) */
-      /* ->Map.remove(_root->I.convertFocusToChild) */
-      /* ->Map.toArray; */
-    let tip = subtree->myId->I.convertFocusToChild;
-    inclusive ? ret : ret->Array.keep(d => {fst(d) != tip});
+    inclusive
+      ? ret
+      : {
+        ret->Array.keep(((cid, _)) => {
+          path
+          ->P.parent
+          ->Option.eq(
+              Some(cid->I.convertChildToParent),
+              (x, y) => {
+                [%log.debug
+                  "xy: " ++ x->PID.toString ++ "," ++ y->PID.toString;
+                  ("", "")
+                ];
+                x->PID.toString != y->PID.toString;
+              },
+            )
+        });
+      };
+
+  /* inclusive */
+  /*   ? { */
+  /*     switch (path->P.parent) { */
+  /*     | Some(pid) => */
+  /*       ret->Array.concat([| */
+  /*         (pid->I.convertParentToChild, path->P.moveUp), */
+  /*       |]) */
+  /*     | None => ret */
+  /*     }; */
+  /*   } */
+  /*   : ret; */
   | None => [||]
   };
 };
@@ -305,12 +402,19 @@ let getAllIds = (tree: t): array(CID.t) => {
 
 let getSubtree = (tree: t, path: P.t, id: ID.t): option(t) => {
   // switch the path so that it goes from root -> node
-  let pathFromRoot = path->P.pathFromRoot->List.map(I.convertParentToChild);
-  switch (tree->_getSubtreeAtPath(pathFromRoot)) {
-  | Some(parentTree) =>
-    parentTree->children->Map.get(id->I.convertFocusToChild)
-  | None => None
-  };
+  let pathFromRoot =
+    path
+    ->P.append(id->I.convertFocusToParent)
+    ->P.pathFromRoot
+    ->List.map(I.convertParentToChild);
+  let ret =
+    switch (tree->_getSubtreeAtPath(pathFromRoot)) {
+    | Some(parentTree) =>
+      [%log.debug "getSubtree: parentTree" ++ parentTree->toString; ("", "")];
+      parentTree->children->Map.get(id->I.convertFocusToChild);
+    | None => None
+    };
+  ret->Option.map(_stitchOnRoot);
 };
 
 let addSubtree = (tree: t, from: ID.t, under: P.t, subtreeToAdd: t): t => {
@@ -396,16 +500,19 @@ let removeSubtree = (tree: t, path: P.t, child: CID.t): t => {
 };
 
 let eq = (expected, actual) => {
-  let eIds = expected->getAllPaths->SortArray.stableSortBy( (x, y) => {
-    compare(x->fst->CID.toString, y->fst->CID.toString)
-  });
-  let aIds = actual->getAllPaths->SortArray.stableSortBy( (x, y) => {
-    compare(x->fst->CID.toString, y->fst->CID.toString)
-  });
+  let eIds =
+    expected
+    ->getAllPaths
+    ->SortArray.stableSortBy((x, y) => {
+        compare(x->fst->CID.toString, y->fst->CID.toString)
+      });
+  let aIds =
+    actual
+    ->getAllPaths
+    ->SortArray.stableSortBy((x, y) => {
+        compare(x->fst->CID.toString, y->fst->CID.toString)
+      });
   eIds->Array.eq(aIds, (x, y) => {
-    x->fst->CID.toString == y->fst->CID.toString &&
-      x->snd->P.eq(y->snd);
+    x->fst->CID.toString == y->fst->CID.toString && x->snd->P.eq(y->snd)
   });
 };
-
-

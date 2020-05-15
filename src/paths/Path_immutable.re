@@ -18,16 +18,22 @@ let moveUp = parents => {
   };
 };
 
-/* let moveDown = parents => { */
-/*   let n = parents.pathUp->List.size; */
-/*   {pathUp: parents.pathUp->List.take(n - 1)->Option.getWithDefault([])}; */
-/* }; */
+let splitLast = parents => {
+  let n = parents.pathUp->List.size;
+  n == 0
+    ? (None, parents)
+    : {
+      let (l, r) = parents.pathUp->List.splitAt(n - 1)->Option.getExn;
+      (r->List.get(0), {pathUp: l});
+    };
+};
 
 let parent = parents =>
   switch (parents.pathUp) {
   | [hd, ..._tl] => Some(hd)
   | _ => None
   };
+
 let root = parents => {
   let n = List.size(parents.pathUp);
   parents.pathUp->List.get(n - 1);
