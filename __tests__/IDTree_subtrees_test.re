@@ -30,6 +30,11 @@ describe("subtrees", () => {
     t
     ->M.getSubtree(StandardTree.path1->P.moveUp->P.moveUp, ID.create("1"))
     ->Option.getExn;
+  /* | . 1:{ me: 1, #children: 2, isRoot: false} */
+  /* | . . . b:{ me: b, #children: 1, isRoot: false} */
+  /* | . . . . . child2:{ me: child2, #children: 0, isRoot: false} */
+  /* | . . . a:{ me: a, #children: 1, isRoot: false} */
+  /* | . . . . . child1:{ me: child1, #children: 0, isRoot: false} */
   it("gotSubtree2", () => {
     t1->M.myId == ID.create("1") |> Assert.equal(true)
   });
@@ -43,6 +48,33 @@ describe("subtrees", () => {
   });
   it("gotChildInSubtree2", () => {
     t1->M.children->Map.has(CID.create("b")) |> Assert.equal(true)
+  });
+
+  it("is not rooted yet", () => {
+    t1->M.isRoot |> Assert.equal(false)
+  });
+
+  let t2 = t1->M.makeIntoRootedSubtree;
+  /* { me: root, #children: 1, isRoot: true} */
+  /* | . 1:{ me: 1, #children: 2, isRoot: false} */
+  /* | . . . b:{ me: b, #children: 1, isRoot: false} */
+  /* | . . . . . child2:{ me: child2, #children: 0, isRoot: false} */
+  /* | . . . a:{ me: a, #children: 1, isRoot: false} */
+  /* | . . . . . child1:{ me: child1, #children: 0, isRoot: false} */
+  it("can make rooted subtree", () => {
+    [%log.debug t2->M.toString; ("", "")];
+    t2->M.isRoot |> Assert.equal(true);
+  });
+  it("gotSubtree3", () => {
+    t2->M.myId == ID.create("root") |> Assert.equal(true)
+  });
+
+  it("gotOntChildInSubtree now", () => {
+    t2->M.children->Map.size |> Assert.equal(1)
+  });
+
+  it("gotChildInSubtree2", () => {
+    t2->M.children->Map.has(CID.create("1")) |> Assert.equal(true)
   });
 });
 
