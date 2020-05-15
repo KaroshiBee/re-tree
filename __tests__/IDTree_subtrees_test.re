@@ -76,6 +76,14 @@ describe("subtrees", () => {
   it("gotChildInSubtree2", () => {
     t2->M.children->Map.has(CID.create("1")) |> Assert.equal(true)
   });
+
+  it("original is rooted", () => {
+    t->M.isRoot |> Assert.ok
+  });
+
+  it("original can be made rooted but is noop", () => {
+    t->M.makeIntoRootedSubtree->M.eq(t)->Assert.ok
+  });
 });
 
 describe("addSubtree", () => {
