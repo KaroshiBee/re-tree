@@ -219,7 +219,7 @@ let _get = (subtree: t, path: P.t): list((CID.t, P.t)) => {
     /* [%log.debug "CONT aux called with path: " ++ path->P.toString; ("", "")]; */
     switch (childList) {
     | [] =>
-//      let m = CID.Map.make();
+      //      let m = CID.Map.make();
       let ppath = path->P.moveUp;
       /* [%log.debug */
       /*   "CONT finished adding: " */
@@ -228,8 +228,8 @@ let _get = (subtree: t, path: P.t): list((CID.t, P.t)) => {
       /*   ++ id->ID.toString; */
       /*   ("", "") */
       /* ]; */
-  //    k(m->Map.set(id->I.convertFocusToChild, ppath));
-k([(id->I.convertFocusToChild, ppath)]);
+      //    k(m->Map.set(id->I.convertFocusToChild, ppath));
+      k([(id->I.convertFocusToChild, ppath)]);
     /* subtree->isRoot */
     /*   ? { */
     /*     [%log.debug "CONT found root"; ("", "")]; */
@@ -261,11 +261,11 @@ k([(id->I.convertFocusToChild, ppath)]);
           /* ]; */
           k(
             List.concat(ret, siblings),
-//            ret->Map.mergeMany(siblings->Map.toArray),
+            //            ret->Map.mergeMany(siblings->Map.toArray),
           )
         })
       })
-      //recurse over children
+    //recurse over children
     };
   };
   aux(subtree->myId, path, subtree->children->Map.toList, x => {x});
@@ -282,9 +282,9 @@ let getChildPaths =
       _get(subtree, path)
       ->List.keep(tup => fst(tup) != _root->I.convertFocusToChild)
       ->List.toArray;
-      /* _get(subtree, path) */
-      /* ->Map.remove(_root->I.convertFocusToChild) */
-      /* ->Map.toArray; */
+    /* _get(subtree, path) */
+    /* ->Map.remove(_root->I.convertFocusToChild) */
+    /* ->Map.toArray; */
     let tip = subtree->myId->I.convertFocusToChild;
     inclusive ? ret : ret->Array.keep(d => {fst(d) != tip});
   | None => [||]
@@ -395,17 +395,33 @@ let removeSubtree = (tree: t, path: P.t, child: CID.t): t => {
   aux(tree, pathFromRoot, x => {x});
 };
 
-let eq = (expected, actual) => {
-  let eIds = expected->getAllPaths->SortArray.stableSortBy( (x, y) => {
-    compare(x->fst->CID.toString, y->fst->CID.toString)
-  });
-  let aIds = actual->getAllPaths->SortArray.stableSortBy( (x, y) => {
-    compare(x->fst->CID.toString, y->fst->CID.toString)
-  });
-  eIds->Array.eq(aIds, (x, y) => {
-    x->fst->CID.toString == y->fst->CID.toString &&
-      x->snd->P.eq(y->snd);
-  });
+let makeIntoRootedSubtree = subtree => {
+  subtree->isRoot
+    ? subtree
+    : {
+      let t = empty();
+      {
+        ...t,
+        children:
+          t->children->Map.set(subtree->myId->I.convertFocusToChild, subtree),
+      };
+    };
 };
 
-
+let eq = (expected, actual) => {
+  let eIds =
+    expected
+    ->getAllPaths
+    ->SortArray.stableSortBy((x, y) => {
+        compare(x->fst->CID.toString, y->fst->CID.toString)
+      });
+  let aIds =
+    actual
+    ->getAllPaths
+    ->SortArray.stableSortBy((x, y) => {
+        compare(x->fst->CID.toString, y->fst->CID.toString)
+      });
+  eIds->Array.eq(aIds, (x, y) => {
+    x->fst->CID.toString == y->fst->CID.toString && x->snd->P.eq(y->snd)
+  });
+};
