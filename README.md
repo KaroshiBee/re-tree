@@ -7,8 +7,15 @@ A parent/child tree inspired by Atlassian ToolKit Tree (c.f. https://atlaskit.at
 ```
 yarn watch:bs
 ```
+
 # Test + Watch
 
 ```
-yarn watch:jest
+yarn watch:test
+```
+
+# Fastcheck + Watch
+
+```
+yarn watch:fastcheck
 ```
