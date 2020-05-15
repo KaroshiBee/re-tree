@@ -154,16 +154,12 @@ let subGraphForNode = (graph: t('a), id: ID.t): option(t('a)) => {
 
 let childIdsOfRoot = (graph: t('a)): list(ID.t) => {
   [%log.debug "childIdsOfRoot"; ("", "")];
-  graph.tree->IDTree.isRoot
-    ? {
-      [%log.debug "is root"; ("", "")];
-      graph.tree
-      ->IDTree.children
-      ->Map.keysToArray
-      ->List.fromArray
-      ->List.map(I.convertChildToFocus);
-    }
-    : [];
+  graph.tree
+  ->IDTree.makeIntoRootedSubtree
+  ->IDTree.children
+  ->Map.keysToArray
+  ->List.fromArray
+  ->List.map(I.convertChildToFocus);
 };
 
 let childrenOfRoot = (graph: t('a)): list(t('a)) => {
