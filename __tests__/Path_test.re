@@ -1,116 +1,108 @@
-open BsMocha.Mocha;
-module Assert = BsMocha.Assert
-
-module M = Path.T;
+open Test_utils;
+let _ = (); //weird bug in reason-mode reason-paren-level
 
 describe("construction", () => {
-
-  let p = M.empty();
+  let p = P.empty();
 
   it("rootOfEmptyIsNone", () => {
-    (p->M.root) |> Assert.equal(None)
+    p->P.root |> Assert.equal(None)
   });
 
   it("parentOfEmptyIsNone", () => {
-    (p->M.parent) |> Assert.equal(None)
+    p->P.parent |> Assert.equal(None)
   });
 
-  let p = M.fromList(["parent", "root"]);
+  let p = P.fromList(["parent", "root"]);
   it("canMakeFromList", () => {
     let id = Identity.ParentId.create("parent");
-    (p->M.parent->Option.getExn) |> Assert.equal(id);
+    p->P.parent->Option.getExn |> Assert.equal(id);
   });
 
   it("canMakeFromList1", () => {
     let id = Identity.ParentId.create("root");
-    (p->M.root->Option.getExn) |> Assert.equal(id);
+    p->P.root->Option.getExn |> Assert.equal(id);
   });
 
-  let p = M.fromList(["parent1", "parent2", "root"]);
+  let p = P.fromList(["parent1", "parent2", "root"]);
   it("pathUpToRoot", () => {
     let ls = ["parent1", "parent2", "root"];
     let ps = ls->List.map(Identity.ParentId.create);
-    let qs = p->M.pathToRoot;
+    let qs = p->P.pathToRoot;
     let deepEq = Pervasives.(===);
-    (List.eq(ps, qs, deepEq)) |> Assert.equal(true);
+    List.eq(ps, qs, deepEq) |> Assert.equal(true);
   });
 
   it("pathFromRoot", () => {
     let ls = ["root", "parent2", "parent1"];
     let ps = ls->List.map(Identity.ParentId.create);
-    let qs = p->M.pathFromRoot;
+    let qs = p->P.pathFromRoot;
     let deepEq = Pervasives.(===);
-    (List.eq(ps, qs, deepEq)) |> Assert.equal(true);
+    List.eq(ps, qs, deepEq) |> Assert.equal(true);
   });
 });
 
 describe("moving", () => {
-
   it("canMoveUp", () => {
-    let p = M.fromList(["parent1", "parent2", "root"]);
-    let pUp = M.fromList(["parent2", "root"]);
-    (p->M.moveUp->M.eq(pUp)) |> Assert.equal(true);
+    let p = P.fromList(["parent1", "parent2", "root"]);
+    let pUp = P.fromList(["parent2", "root"]);
+    p->P.moveUp->P.eq(pUp) |> Assert.equal(true);
   });
 
   it("canMoveUpEmpty", () => {
-    let p = M.empty();
-    let pUp = M.fromList([]);
-    (p->M.moveUp->M.eq(pUp)) |> Assert.equal(true);
+    let p = P.empty();
+    let pUp = P.fromList([]);
+    p->P.moveUp->P.eq(pUp) |> Assert.equal(true);
   });
   /* it("canMoveDown", () => { */
-  /*   let p = M.fromList(["parent1", "parent2", "root"]); */
-  /*   let pUp = M.fromList(["parent1", "parent2"]); */
-  /*   (p->M.moveDown->M.eq(pUp)) |> Assert.equal(true); */
+  /*   let p = P.fromList(["parent1", "parent2", "root"]); */
+  /*   let pUp = P.fromList(["parent1", "parent2"]); */
+  /*   (p->P.moveDown->P.eq(pUp)) |> Assert.equal(true); */
   /* }); */
   /* it("canMoveDownEmpty", () => { */
-  /*   let p = M.empty(); */
-  /*   let pUp = M.fromList([]); */
-  /*   (p->M.moveDown->M.eq(pUp)) |> Assert.equal(true); */
+  /*   let p = P.empty(); */
+  /*   let pUp = P.fromList([]); */
+  /*   (p->P.moveDown->P.eq(pUp)) |> Assert.equal(true); */
   /* }); */
 });
 
 describe("equality", () => {
-
   it("samePath", () => {
-    let p = M.fromList(["parent1", "parent2", "root"]);
-    let p2 = M.fromList(["parent1", "parent2", "root"]);
-    (p->M.eq(p2)) |> Assert.equal(true);
+    let p = P.fromList(["parent1", "parent2", "root"]);
+    let p2 = P.fromList(["parent1", "parent2", "root"]);
+    p->P.eq(p2) |> Assert.equal(true);
   });
 
   it("notSamePath", () => {
-    let p = M.fromList(["parent1", "parent2", "root"]);
-    let pUp = M.fromList(["parent3", "root"]);
-    (p->M.eq(pUp)) |> Assert.equal(false);
+    let p = P.fromList(["parent1", "parent2", "root"]);
+    let pUp = P.fromList(["parent3", "root"]);
+    p->P.eq(pUp) |> Assert.equal(false);
   });
 });
 
 describe("append", () => {
-
-  let p = M.fromList(["parent1", "parent2"]);
-  let p1 = M.fromList(["child1", "parent1", "parent2"]);
+  let p = P.fromList(["parent1", "parent2"]);
+  let p1 = P.fromList(["child1", "parent1", "parent2"]);
   it("canAppend", () => {
-    let q = p->M.append("child1"->Identity.ParentId.create);
-    (q->M.eq(p1)) |> Assert.equal(true);
+    let q = p->P.append("child1"->Identity.ParentId.create);
+    q->P.eq(p1) |> Assert.equal(true);
   });
 });
 
 describe("removeElement", () => {
-
-  let p = M.fromList(["child1", "parent1", "parent2"]);
-  let p1 = M.fromList(["child1", "parent2"]);
+  let p = P.fromList(["child1", "parent1", "parent2"]);
+  let p1 = P.fromList(["child1", "parent2"]);
   it("canRemove", () => {
-    let q = p->M.removeElement("parent1"->Identity.ParentId.create);
-    (q->M.eq(p1)) |> Assert.equal(true);
+    let q = p->P.removeElement("parent1"->Identity.ParentId.create);
+    q->P.eq(p1) |> Assert.equal(true);
   });
 });
 
 describe("concat", () => {
-
-  let p = M.fromList(["child1", "parent1", "parent2"]);
-  let p1 = M.fromList(["parent3", "parent4"]);
-  let p2 = M.fromList(["child1", "parent1", "parent2", "parent3", "parent4"]);
+  let p = P.fromList(["child1", "parent1", "parent2"]);
+  let p1 = P.fromList(["parent3", "parent4"]);
+  let p2 = P.fromList(["child1", "parent1", "parent2", "parent3", "parent4"]);
   it("canConcat", () => {
-    let q = p->M.concat(p1);
-    (q->M.eq(p2)) |> Assert.equal(true);
+    let q = p->P.concat(p1);
+    q->P.eq(p2) |> Assert.equal(true);
   });
 });

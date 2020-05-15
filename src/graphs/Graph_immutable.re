@@ -83,7 +83,7 @@ let depth = (graph: t('a), id: ID.t): int => {
   graph->pathFromNode(id)->Option.map(P.size)->Option.getWithDefault(0);
 };
 
-let maxDepth = (graph: t('a), id: ID.t): int => {
+let maxDepth = (graph: t('a)): int => {
   graph.masterLookup
   ->Map.reduce(0, (acc, _ky, dataWithPath) => {
       max(acc, dataWithPath.pathUp->P.size)
@@ -480,6 +480,17 @@ let setSubGraphForRoot =
     });
 };
 
+let trimPaths = (graph, pathToTrimOff) => {
+  switch (pathToTrimOff) {
+  | Some(pth) =>
+    let masterLookup =
+      graph.masterLookup
+      ->Map.map(d => {...d, pathUp: d.pathUp->P.trim(pth)});
+    {...graph, masterLookup};
+  | None => graph
+  };
+};
+
 let moveSubtree = (graph: t('a), from: CID.t, under: PID.t) => {
   let id = from->Identity.convertChildToFocus;
   let pid = under->I.convertParentToFocus;
@@ -731,4 +742,15 @@ let fromArray =
             };
           },
         );
+};
+
+let eq = (g, h) => {
+  let gMap = g.masterLookup;
+  let hMap = h.masterLookup;
+  gMap->Map.eq(hMap, (gg, hh) => {
+    Hashtbl.(
+      hash(gg.pathUp->P.toString) == hash(hh.pathUp->P.toString)
+      && hash(gg.value) == hash(hh.value)
+    )
+  });
 };

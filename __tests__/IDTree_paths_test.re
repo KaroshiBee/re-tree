@@ -1,13 +1,12 @@
-open BsMocha.Mocha;
-module Assert = BsMocha.Assert;
 open Test_utils;
+let _ = (); //weird bug in reason-mode reason-paren-level
 
 describe("getChildPaths", () => {
   let t = StandardTree.t;
 
-  [%log.debug "test tree: " ++ t->M.toString; ("", "")];
+  [%log.debug "test tree: " ++ t->T.toString; ("", "")];
   it("gotAllChildren", () => {
-    let paths = t->M.getChildPaths(StandardTree.path0, false); // should be all children of 2
+    let paths = t->T.getChildPaths(StandardTree.path0, false); // should be all children of 2
     [%log.debug
       "gotAllChildren CONT"
       ++ (
@@ -32,7 +31,7 @@ describe("getChildPaths", () => {
      */
   });
   it("gotFourChildren", () => {
-    let paths = t->M.getChildPaths(P.fromRootToPathList(["2", "1"]), false);
+    let paths = t->T.getChildPaths(P.fromRootToPathList(["2", "1"]), false);
     [%log.debug
       "gotFourChildren paths: "
       ++ (
@@ -61,7 +60,7 @@ describe("getChildPaths", () => {
      */
   });
   it("gotFourChildIds", () => {
-    let paths = t->M.getChildIds(P.fromRootToPathList(["2", "1"]), false);
+    let paths = t->T.getChildIds(P.fromRootToPathList(["2", "1"]), false);
     /* %log.debug */
     /* paths */
     /* ->Array.map(pr => */
@@ -77,7 +76,7 @@ describe("getChildPaths", () => {
        {a:1,2},
      */
   });
-  let paths = t->M.getChildPaths(StandardTree.path3, false); // should be only one
+  let paths = t->T.getChildPaths(StandardTree.path3, false); // should be only one
   it("gotOnlyOne", () => {
     paths->Array.size |> Assert.equal(1)
   });
@@ -94,7 +93,7 @@ describe("getChildPaths", () => {
     pr->snd->P.eq(StandardTree.path3) |> Assert.equal(true);
   });
   it("gotNone", () => {
-    let paths = t->M.getChildIds(P.fromRootToPathList(["20", "10"]), false);
+    let paths = t->T.getChildIds(P.fromRootToPathList(["20", "10"]), false);
     paths->Array.size |> Assert.equal(0);
   });
 });
@@ -102,7 +101,7 @@ describe("getChildPaths", () => {
 describe("getAllPaths", () => {
   let t = StandardTree.t;
   it("gotAllPaths", () => {
-    let paths = t->M.getAllPaths; // should be all of them
+    let paths = t->T.getAllPaths; // should be all of them
     /* %log.debug */
     /* paths */
     /* ->Array.map(pr => */
@@ -131,7 +130,7 @@ describe("getAllPaths", () => {
   });
 
   it("gotAllIds", () => {
-    let paths = t->M.getAllIds; // should be all of them
+    let paths = t->T.getAllIds; // should be all of them
     /* %log.debug */
     /* paths */
     /* ->Array.map(pr => */
@@ -154,7 +153,7 @@ describe("getAllPaths", () => {
   });
 
   it("gotChildPAths", () => {
-    let paths = t->M.getChildPaths(P.fromList(["2"]), false); // should not include 2
+    let paths = t->T.getChildPaths(P.fromList(["2"]), false); // should not include 2
     /* %log.debug */
     /* paths */
     /* ->Array.map(pr => */
@@ -176,7 +175,7 @@ describe("getAllPaths", () => {
   });
 
   it("gotChildPathsInclusive", () => {
-    let paths = t->M.getChildPaths(P.fromList(["2"]), true); // should be all of them
+    let paths = t->T.getChildPaths(P.fromList(["2"]), true); // should be all of them
     /* %log.debug */
     /* paths */
     /* ->Array.map(pr => */
