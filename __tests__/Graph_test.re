@@ -1,35 +1,5 @@
 open Test_utils;
 
-type data = {
-  one: int,
-  two: string,
-};
-
-let id1 = ID.create("1");
-let id2 = ID.create("2");
-let id3 = ID.create("3");
-let id4 = ID.create("4");
-
-let makeGraph = () => {
-  G.empty()
-  ->G.addNode(id1, {one: 1, two: "one"})
-  ->G.addNodeUnder(
-      id2,
-      {one: 2, two: "two"},
-      id1->Identity.convertFocusToParent,
-    )
-  ->G.addNodeUnder(
-      id3,
-      {one: 3, two: "three"},
-      id1->Identity.convertFocusToParent,
-    )
-  ->G.addNodeUnder(
-      id4,
-      {one: 4, two: "four"},
-      id3->Identity.convertFocusToParent,
-    );
-};
-
 describe("canMakeEmpty", () => {
   let g = G.empty();
 
@@ -51,7 +21,9 @@ describe("canMakeEmpty", () => {
 });
 
 describe("addImmediateChildren", () => {
-  let g = G.empty()->G.addNode(ID.create("1"), {one: 4, two: "four"});
+  let g =
+    G.empty()
+    ->G.addNode(ID.create("1"), StandardGraph.{one: 4, two: "four"});
 
   it("oneChildAdded", () => {
     g->G.size |> Assert.equal(1)
@@ -96,11 +68,15 @@ describe("addParentChild", () => {
   let id = ID.create("1");
   let g =
     G.empty()
-    ->G.addNode(id, {one: 4, two: "four"})
-    ->G.addNodeUnder(ID.create("2"), {one: 2, two: "two"}, PID.create("1"))
+    ->G.addNode(id, StandardGraph.{one: 4, two: "four"})
+    ->G.addNodeUnder(
+        ID.create("2"),
+        StandardGraph.{one: 2, two: "two"},
+        PID.create("1"),
+      )
     ->G.addNodeUnder(
         ID.create("3"),
-        {one: 1, two: "one"},
+        StandardGraph.{one: 1, two: "one"},
         PID.create("2"),
       );
 
@@ -155,7 +131,7 @@ describe("addParentChild", () => {
 });
 
 describe("moveChild", () => {
-  let g = makeGraph();
+  let g = StandardGraph.makeGraph();
   let _test = (g, s) => {
     it("_test", () => {
       g->G.containsId(ID.create(s)) |> Assert.equal(true)
@@ -166,21 +142,24 @@ describe("moveChild", () => {
   _test(g, "3");
   _test(g, "4");
 
-  let path = g->G.pathFromNode(id4)->Option.getExn;
+  let path = g->G.pathFromNode(StandardGraph.id4)->Option.getExn;
   it("4PathUp", () => {
     path->P.eq(P.fromList(["3", "1"])) |> Assert.equal(true)
   });
-  let path = g->G.pathFromNode(id3)->Option.getExn;
+  let path = g->G.pathFromNode(StandardGraph.id3)->Option.getExn;
   it("3PathUp", () => {
     path->P.eq(P.fromList(["1"])) |> Assert.equal(true)
   });
-  let path = g->G.pathFromNode(id2)->Option.getExn;
+  let path = g->G.pathFromNode(StandardGraph.id2)->Option.getExn;
   it("2PathUp", () => {
     path->P.eq(P.fromList(["1"])) |> Assert.equal(true)
   });
 
   let g1 =
-    g->G.moveChild(id3->I.convertFocusToChild, id2->I.convertFocusToParent);
+    g->G.moveChild(
+      StandardGraph.id3->I.convertFocusToChild,
+      StandardGraph.id2->I.convertFocusToParent,
+    );
 
   it("notErrored", () => {
     g1->Result.isOk |> Assert.equal(true)
@@ -191,22 +170,22 @@ describe("moveChild", () => {
   _test(g1, "2");
   _test(g1, "3");
   _test(g1, "4");
-  let path = g1->G.pathFromNode(id4)->Option.getExn;
+  let path = g1->G.pathFromNode(StandardGraph.id4)->Option.getExn;
   it("4PathUp", () => {
     path->P.eq(P.fromList(["1"])) |> Assert.equal(true)
   });
-  let path = g1->G.pathFromNode(id3)->Option.getExn;
+  let path = g1->G.pathFromNode(StandardGraph.id3)->Option.getExn;
   it("3PathUp", () => {
     path->P.eq(P.fromList(["2", "1"])) |> Assert.equal(true)
   });
-  let path = g->G.pathFromNode(id2)->Option.getExn;
+  let path = g->G.pathFromNode(StandardGraph.id2)->Option.getExn;
   it("2PathUp", () => {
     path->P.eq(P.fromList(["1"])) |> Assert.equal(true)
   });
 });
 
 describe("removeSubtree", () => {
-  let g = makeGraph();
+  let g = StandardGraph.makeGraph();
 
   let _test = (g, s, e) => {
     it("_test", () => {
@@ -219,8 +198,8 @@ describe("removeSubtree", () => {
   _test(g, "4", true);
 
   %log.debug
-  g->G.pathFromNode(id3)->Option.getExn->P.toString;
-  let g1 = g->G.removeSubtree(id3);
+  g->G.pathFromNode(StandardGraph.id3)->Option.getExn->P.toString;
+  let g1 = g->G.removeSubtree(StandardGraph.id3);
   it("notErrored", () => {
     g1->Result.isOk |> Assert.equal(true)
   });
@@ -233,7 +212,7 @@ describe("removeSubtree", () => {
 });
 
 describe("moveSubtree", () => {
-  let g = makeGraph();
+  let g = StandardGraph.makeGraph();
 
   let _test = (g, s) => {
     it("_test", () => {
@@ -245,21 +224,24 @@ describe("moveSubtree", () => {
   _test(g, "3");
   _test(g, "4");
 
-  let path = g->G.pathFromNode(id4)->Option.getExn;
+  let path = g->G.pathFromNode(StandardGraph.id4)->Option.getExn;
   it("4PathUp", () => {
     path->P.eq(P.fromList(["3", "1"])) |> Assert.equal(true)
   });
-  let path = g->G.pathFromNode(id3)->Option.getExn;
+  let path = g->G.pathFromNode(StandardGraph.id3)->Option.getExn;
   it("3PathUp", () => {
     path->P.eq(P.fromList(["1"])) |> Assert.equal(true)
   });
-  let path = g->G.pathFromNode(id2)->Option.getExn;
+  let path = g->G.pathFromNode(StandardGraph.id2)->Option.getExn;
   it("2PathUp", () => {
     path->P.eq(P.fromList(["1"])) |> Assert.equal(true)
   });
 
   let g1 =
-    g->G.moveSubtree(id3->I.convertFocusToChild, id2->I.convertFocusToParent);
+    g->G.moveSubtree(
+      StandardGraph.id3->I.convertFocusToChild,
+      StandardGraph.id2->I.convertFocusToParent,
+    );
 
   it("notErrored", () => {
     g1->Result.isOk |> Assert.equal(true)
@@ -270,22 +252,22 @@ describe("moveSubtree", () => {
   _test(g1, "2");
   _test(g1, "3");
   _test(g1, "4");
-  let path = g1->G.pathFromNode(id4)->Option.getExn;
+  let path = g1->G.pathFromNode(StandardGraph.id4)->Option.getExn;
   it("4PathUp_", () => {
     path->P.eq(P.fromList(["3", "2", "1"])) |> Assert.equal(true)
   });
-  let path = g1->G.pathFromNode(id3)->Option.getExn;
+  let path = g1->G.pathFromNode(StandardGraph.id3)->Option.getExn;
   it("3PathUp_", () => {
     path->P.eq(P.fromList(["2", "1"])) |> Assert.equal(true)
   });
-  let path = g->G.pathFromNode(id2)->Option.getExn;
+  let path = g->G.pathFromNode(StandardGraph.id2)->Option.getExn;
   it("2PathUp_", () => {
     path->P.eq(P.fromList(["1"])) |> Assert.equal(true)
   });
 });
 
 describe("mapping", () => {
-  let g = makeGraph();
+  let g = StandardGraph.makeGraph();
 
   let g1 = g->G.map(d => d.one->string_of_int ++ ":" ++ d.two);
 
@@ -303,7 +285,7 @@ describe("mapping", () => {
 });
 
 describe("foreach", () => {
-  let g = makeGraph();
+  let g = StandardGraph.makeGraph();
 
   let i = ref(0);
 
@@ -315,8 +297,8 @@ describe("foreach", () => {
 });
 
 describe("keep", () => {
-  let g = makeGraph();
-  let g1 = g->G.keep((id, d) => d.one < 2 || id == id3);
+  let g = StandardGraph.makeGraph();
+  let g1 = g->G.keep((id, d) => d.one < 2 || id == StandardGraph.id3);
 
   let _test = (g, s, e) => {
     it("_test", () => {
@@ -327,12 +309,12 @@ describe("keep", () => {
   _test(g1, "2", false);
   _test(g1, "3", true);
   _test(g1, "4", false);
-  let path = g1->G.pathFromNode(id3)->Option.getExn;
+  let path = g1->G.pathFromNode(StandardGraph.id3)->Option.getExn;
   it("3PathUp", () => {
     path->P.eq(P.fromList(["1"])) |> Assert.equal(true)
   });
 
-  let g2 = g->G.keep((id, d) => d.one <= 2 || id == id4);
+  let g2 = g->G.keep((id, d) => d.one <= 2 || id == StandardGraph.id4);
   // this should remove 4 because it is no longer reachable
   _test(g2, "1", true);
   _test(g2, "2", true);
@@ -344,14 +326,14 @@ describe("keep", () => {
   _test(g3, "2", true);
   _test(g3, "3", true);
   _test(g3, "4", false);
-  let path = g3->G.pathFromNode(id2)->Option.getExn;
+  let path = g3->G.pathFromNode(StandardGraph.id2)->Option.getExn;
   it("2PathUp", () => {
     path->P.eq(P.fromList(["1"])) |> Assert.equal(true)
   });
 });
 
 describe("setSubGraphForNode-should-set-subgraph", () => {
-  let g = makeGraph();
+  let g = StandardGraph.makeGraph();
   let _test = (g, s) => {
     it("_test", () => {
       g->G.containsId(ID.create(s)) |> Assert.equal(true)
@@ -366,13 +348,26 @@ describe("setSubGraphForNode-should-set-subgraph", () => {
   let id6 = ID.create("6");
   let gChild =
     G.empty()
-    ->G.addNode(id2, {one: 22222, two: "ASdasdasda"})
-    ->G.addNodeUnder(id5, {one: 5, two: "five"}, id2->I.convertFocusToParent)
-    ->G.addNodeUnder(id6, {one: 6, two: "six"}, id2->I.convertFocusToParent);
+    ->G.addNode(
+        StandardGraph.id2,
+        StandardGraph.{one: 22222, two: "ASdasdasda"},
+      )
+    ->G.addNodeUnder(
+        id5,
+        StandardGraph.{one: 5, two: "five"},
+        StandardGraph.id2->I.convertFocusToParent,
+      )
+    ->G.addNodeUnder(
+        id6,
+        StandardGraph.{one: 6, two: "six"},
+        StandardGraph.id2->I.convertFocusToParent,
+      );
   _test(gChild, "5");
   _test(gChild, "6");
   [%log.debug "about to set new subgraph"; ("", "")];
-  switch (g->G.setSubGraphForNode(id2->I.convertFocusToParent, gChild)) {
+  switch (
+    g->G.setSubGraphForNode(StandardGraph.id2->I.convertFocusToParent, gChild)
+  ) {
   | Ok(g1) =>
     _test(g1, "5");
     _test(g1, "6");
@@ -386,11 +381,11 @@ describe("updteChildren-should-update-only-children", () => {
   let _test = (g, n, vl) => {
     let data = g->G.dataForNode(ID.create(n))->Option.getExn;
     it("masterLookupHasCorrectData", () => {
-      data.one |> Assert.equal(vl)
+      StandardGraph.(data.one |> Assert.equal(vl))
     });
   };
 
-  let g = makeGraph();
+  let g = StandardGraph.makeGraph();
   _test(g, "1", 1);
   _test(g, "2", 2);
   _test(g, "3", 3);

@@ -81,3 +81,35 @@ module Path_utils = {
       });
   };
 };
+
+module StandardGraph = {
+  type data = {
+    one: int,
+    two: string,
+  };
+
+  let id1 = ID.create("1");
+  let id2 = ID.create("2");
+  let id3 = ID.create("3");
+  let id4 = ID.create("4");
+
+  let makeGraph = () => {
+    G.empty()
+    ->G.addNode(id1, {one: 1, two: "one"})
+    ->G.addNodeUnder(
+        id2,
+        {one: 2, two: "two"},
+        id1->Identity.convertFocusToParent,
+      )
+    ->G.addNodeUnder(
+        id3,
+        {one: 3, two: "three"},
+        id1->Identity.convertFocusToParent,
+      )
+    ->G.addNodeUnder(
+        id4,
+        {one: 4, two: "four"},
+        id3->Identity.convertFocusToParent,
+      );
+  };
+};
