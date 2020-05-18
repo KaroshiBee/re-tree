@@ -3,39 +3,39 @@ module ID = I.FocusId;
 module PID = I.ParentId;
 module CID = I.ChildId;
 module P = Path.T;
-module type GRAPH = Graph.GRAPH;
+module type GRAPH = GraphF.GRAPH;
 
 module type ZIPPER = {
   type focus;
-  type graph('a);
-  type t('a);
-  let create: (graph('a), focus) => option(t('a));
-  let toString: t('a) => string;
+  type graph;
+  type t;
+  let create: (graph, focus) => option(t);
+  let toString: t => string;
 
-  let focus: t('a) => focus;
-  let up: t('a) => option(t('a));
-  let down: t('a) => option(t('a));
-  let left: t('a) => option(t('a));
-  let right: t('a) => option(t('a));
-  /* let current: t('a) => option(Graph.T.t('a)); */
-  /* let context: t('a) => Graph.T.t('a); */
+  let focus: t => focus;
+  let up: t => option(t);
+  let down: t => option(t);
+  let left: t => option(t);
+  let right: t => option(t);
+  /* let current: t => option(Graph.T.t); */
+  /* let context: t => Graph.T.t; */
 
-  let split: t('a) => Result.t(graph('a), string);
-  let reform: (t('a), graph('a)) => Result.t(t('a), string);
+  let split: t => Result.t(graph, string);
+  let reform: (t, graph) => Result.t(t, string);
 };
 
 module Make =
        (G: GRAPH)
-       : (ZIPPER with type focus = ID.t and type graph('a) = G.t('a)) => {
+       : (ZIPPER with type focus = ID.t and type graph = G.t) => {
   type focus = ID.t;
-  type graph('a) = G.t('a);
-  type t('a) = {
+  type graph = G.t;
+  type t = {
     focus_: ID.t,
     up_: option(PID.t),
     down_: list(ID.t),
     left_: list(ID.t),
     right_: list(ID.t),
-    background_: G.t('a),
+    background_: G.t,
   };
 
   let _siblings = (up, g) =>
@@ -133,27 +133,43 @@ module Make =
     {...t, focus_, left_, right_, down_}->Some;
   };
 
-  let split = t =>
-    switch (t.background_->G.subGraphForNode(t.focus_)) {
-    | Some(g) => Result.Ok(g)
-    | None =>
-      Result.Error("Split: cannot find subgraph: " ++ t.focus_->ID.toString)
+  let split = t => {
+    let res =
+      switch (t.background_->G.subGraphForNode(t.focus_)) {
+      | Some(g) =>
+        [%log.debug "adding to empty"; ("", "")];
+        G.empty()->G.setSubGraphForRoot(g);
+      | None =>
+        Result.Error("Split: cannot find subgraph: " ++ t.focus_->ID.toString)
+      };
+    switch (res) {
+    | Result.Ok(g) => [%log.debug "SPLIT: " ++ g->G.toString; ("", "")]
+    | Result.Error(err) => [%log.error "SPLIT: " ++ err; ("", "")]
     };
+    res;
+  };
 
   let reform = (t, inner) => {
-    switch (t.background_->G.subGraphForNode(t.focus_)) {
-    | Some(g) =>
-      inner->G.eq(g)
-        ? t->Result.Ok
+    switch (
+      t.background_->G.subGraphForNode(t.focus_),
+      inner->G.subGraphForNode(t.focus_),
+    ) {
+    | (Some(g), Some(g1)) =>
+      g->G.eq(g1)
+        ? {
+          [%log.debug "reform equal"; ("", "")];
+          t->Result.Ok;
+        }
         : {
+          [%log.debug "reform not equal"; ("", "")];
           let res =
             switch (t.up_) {
-            | Some(pid) => g->G.setSubGraphForNode(pid, inner)
-            | None => g->G.setSubGraphForRoot(inner)
+            | Some(pid) => t.background_->G.setSubGraphForNode(pid, g1)
+            | None => t.background_->G.setSubGraphForRoot(g1)
             };
           res->Result.map(r => {...t, background_: r});
         }
-    | None =>
+    | (_, _) =>
       Result.Error("Reform: cannot find subgraph: " ++ t.focus_->ID.toString)
     };
   };

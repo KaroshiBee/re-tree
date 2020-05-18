@@ -18,6 +18,7 @@ module type PATH = {
   let toString: t => string;
   let removeElement: (t, el) => t;
   let concat: (t, t) => t;
+  let trim: (t, t) => t;
 };
 
 module T: PATH with type el = PID.t = {

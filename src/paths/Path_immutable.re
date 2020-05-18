@@ -59,3 +59,7 @@ let removeElement = (parents, el) => {
 let concat = (parents, other) => {
   {pathUp: parents.pathUp->List.concat(other.pathUp)};
 };
+
+let trim = (parents, toRemove) => {
+  toRemove.pathUp->List.reduce(parents, (ps, p) => {ps->removeElement(p)});
+};

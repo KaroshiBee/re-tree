@@ -88,6 +88,7 @@ module StandardGraph = {
     two: string,
   };
 
+  let doStuff = data => data.one + 1;
   let id1 = ID.create("1");
   let id2 = ID.create("2");
   let id3 = ID.create("3");
@@ -107,6 +108,54 @@ module StandardGraph = {
         id1->Identity.convertFocusToParent,
       )
     ->G.addNodeUnder(
+        id4,
+        {one: 4, two: "four"},
+        id3->Identity.convertFocusToParent,
+      );
+  };
+};
+
+module GraphHashable = {
+  type t = StandardGraph.data;
+
+  let hash = t => StandardGraph.(Hashtbl.hash(t.one) + Hashtbl.hash(t.two));
+
+  let eq = (x, y) => StandardGraph.(x.one == y.one && x.two == y.two);
+  let toString = t =>
+    StandardGraph.(
+      "{one:"
+      ++ t.one->string_of_int
+      ++ ", two: "
+      ++ t.two
+      ++ ", hash: "
+      ++ t->hash->string_of_int
+      ++ "}"
+    );
+};
+
+module GraphElement = GraphF.MakeElement(GraphHashable);
+module GF = GraphF.T(GraphElement);
+
+module FancyGraph = {
+  let id1 = ID.create("1");
+  let id2 = ID.create("2");
+  let id3 = ID.create("3");
+  let id4 = ID.create("4");
+
+  let makeGraph = () => {
+    GF.empty()
+    ->GF.addNode(id1, {one: 1, two: "one"})
+    ->GF.addNodeUnder(
+        id2,
+        {one: 2, two: "two"},
+        id1->Identity.convertFocusToParent,
+      )
+    ->GF.addNodeUnder(
+        id3,
+        {one: 3, two: "three"},
+        id1->Identity.convertFocusToParent,
+      )
+    ->GF.addNodeUnder(
         id4,
         {one: 4, two: "four"},
         id3->Identity.convertFocusToParent,

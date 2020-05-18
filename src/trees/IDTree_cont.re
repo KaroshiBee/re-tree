@@ -305,12 +305,18 @@ let getAllIds = (tree: t): array(CID.t) => {
 
 let getSubtree = (tree: t, path: P.t, id: ID.t): option(t) => {
   // switch the path so that it goes from root -> node
-  let pathFromRoot = path->P.pathFromRoot->List.map(I.convertParentToChild);
-  switch (tree->_getSubtreeAtPath(pathFromRoot)) {
-  | Some(parentTree) =>
-    parentTree->children->Map.get(id->I.convertFocusToChild)
-  | None => None
-  };
+  path->P.size == 0 && tree->myId->ID.toString == id->ID.toString
+    ? tree->Some
+    : {
+      let pathFromRoot =
+        path->P.pathFromRoot->List.map(I.convertParentToChild);
+      [%log.debug "getSubtree: path in " ++ path->P.toString; ("", "")];
+      switch (tree->_getSubtreeAtPath(pathFromRoot)) {
+      | Some(parentTree) =>
+        parentTree->children->Map.get(id->I.convertFocusToChild)
+      | None => None
+      };
+    };
 };
 
 let addSubtree = (tree: t, from: ID.t, under: P.t, subtreeToAdd: t): t => {
