@@ -35,6 +35,12 @@ module Make =
     background_: G.t('a),
   };
 
+  let _siblings = (up, g) =>
+    up
+    ->Option.map(pid => g->G.childIds(pid->I.convertParentToFocus))
+    ->Option.getWithDefault([])
+    ->List.sort((x, y) => Pervasives.compare(x, y));
+
   let create = (g, focus) => {
     g->G.containsId(focus)
       ? {
@@ -43,13 +49,7 @@ module Make =
           g
           ->G.childIds(focus)
           ->List.sort((x, y) => Pervasives.compare(x, y));
-        let siblings =
-          up_
-          ->Option.map(pid => g->G.childIds(pid->I.convertParentToFocus))
-          ->Option.getWithDefault([])
-          ->List.sort((x, y) => Pervasives.compare(x, y));
-        //              String.compare(x->ID.toString, y->ID.toString)
-        //            );
+        let siblings = _siblings(up_, g);
         let index = siblings->List.toArray->Array.getIndexBy(i => i == focus);
         let lr = index->Option.flatMap(i => {siblings->List.splitAt(i)});
         let (left_, right_) =
@@ -75,7 +75,10 @@ module Make =
     ++ ", right: ["
     ++ (t.right_->List.map(ID.toString) |> String.concat(","))
     ++ "]";
+
   let focus = t => t.focus_;
+
+  // TODO can reform without the second childIds call
   let up = t =>
     t.up_
     ->Option.flatMap(pid =>
