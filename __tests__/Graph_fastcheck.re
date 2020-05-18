@@ -1,14 +1,7 @@
-open BsMocha.Mocha;
+open Test_utils;
 open BsFastCheck.Arbitrary;
 open BsFastCheck.Property.Sync;
 open BsFastCheck.Arbitrary.Combinators;
-
-module M = Graph.T;
-module I = Identity;
-module ID = I.FocusId;
-module CID = I.ChildId;
-module PID = I.ParentId;
-module P = Path.T;
 
 module IDs = ID_fastcheck.Arbitrary;
 module Paths = Path_fastcheck.Arbitrary;
@@ -49,32 +42,32 @@ module Arbitrary = {
     let n = dst->MutableStack.size;
     [%log.debug "_randGraph: size: " ++ n->string_of_int; ("", "")];
     n == 0
-      ? constant(M.empty())
+      ? constant(G.empty())
       : {
-        let g = M.empty()->ref;
+        let g = G.empty()->ref;
         let src = [|dst->MutableStack.pop->Option.getExn|]->ref;
         dst->MutableStack.dynamicPopIter(b => {
           let a = (src^)->Array.shuffle->Array.getExn(0);
-          (g^)->M.containsId(a)
-            ? g := (g^)->M.addNodeUnder(b, None, a->I.convertFocusToParent)
+          (g^)->G.containsId(a)
+            ? g := (g^)->G.addNodeUnder(b, None, a->I.convertFocusToParent)
             : g :=
                 (g^)
-                ->M.addNode(a, None)
-                ->M.addNodeUnder(b, None, a->I.convertFocusToParent);
+                ->G.addNode(a, None)
+                ->G.addNodeUnder(b, None, a->I.convertFocusToParent);
           src := (src^)->Array.concat([|b|]);
         });
-        let m = (g^)->M.size;
+        let m = (g^)->G.size;
         [%log.debug "_randGraph: size after: " ++ m->string_of_int; ("", "")];
         m == 0
-          ? M.empty()->constant
+          ? G.empty()->constant
           : {
-            let arr = (g^)->M.toKeyValueArrayWithPaths;
+            let arr = (g^)->G.toKeyValueArrayWithPaths;
             data->Derive.map(d => {
               arr->Array.reduce(
-                M.empty(),
+                G.empty(),
                 (gg, (nodeId, pth, _o)) => {
                   let parentNodeId = pth->P.parent;
-                  gg->M.addNodeAtPath(
+                  gg->G.addNodeAtPath(
                     nodeId,
                     {nodeId, parentNodeId, data: d},
                     pth,
@@ -120,9 +113,9 @@ module Arbitrary = {
   };
 };
 
-let eq = (expectedG: M.t(Arbitrary.other), actualG: M.t(Arbitrary.other)) => {
-  let n = expectedG->M.size;
-  let m = actualG->M.size;
+let eq = (expectedG: G.t(Arbitrary.other), actualG: G.t(Arbitrary.other)) => {
+  let n = expectedG->G.size;
+  let m = actualG->G.size;
   n != m
     ? false
     : {
@@ -131,13 +124,13 @@ let eq = (expectedG: M.t(Arbitrary.other), actualG: M.t(Arbitrary.other)) => {
         : {
           let expected =
             expectedG
-            ->M.toArray
+            ->G.toArray
             ->SortArray.stableSortBy((x, y) => {
                 Pervasives.compare(x.nodeId, y.nodeId)
               });
           let actual =
             actualG
-            ->M.toArray
+            ->G.toArray
             ->SortArray.stableSortBy((x, y) => {
                 Pervasives.compare(x.nodeId, y.nodeId)
               });
@@ -160,8 +153,8 @@ describe("Graph: construction", () => {
     assertProperty1(
       Arbitrary.randomGraph(1000),
       g => {
-        let arr1 = g->M.toArray;
-        let actual = arr1->M.fromArray(o => o.nodeId, o => o.parentNodeId);
+        let arr1 = g->G.toArray;
+        let actual = arr1->G.fromArray(o => o.nodeId, o => o.parentNodeId);
         eq(g, actual);
       },
     )
@@ -176,7 +169,7 @@ describe("Graph: add/move/remove nodes", () => {
       (g, d) => {
         let expected =
           g
-          ->M.toArray
+          ->G.toArray
           ->SortArray.stableSortBy((x, y) => {
               Pervasives.compare(x.nodeId, y.nodeId)
             });
@@ -207,22 +200,22 @@ describe("Graph: add/move/remove nodes", () => {
           switch (parentNodeId, newParentNodeId) {
           | (Some(pid1), Some(pid2)) =>
             g
-            ->M.addNodeUnder(nodeId, o, pid1)
-            ->M.moveChild(nodeId->I.convertFocusToChild, pid2)
-            ->Result.flatMap(ggg => ggg->M.removeNode(nodeId))
+            ->G.addNodeUnder(nodeId, o, pid1)
+            ->G.moveChild(nodeId->I.convertFocusToChild, pid2)
+            ->Result.flatMap(ggg => ggg->G.removeNode(nodeId))
           | (Some(pid1), None) =>
-            g->M.addNodeUnder(nodeId, o, pid1)->M.removeNode(nodeId)
+            g->G.addNodeUnder(nodeId, o, pid1)->G.removeNode(nodeId)
           | (None, Some(pid2)) =>
             g
-            ->M.addNode(nodeId, o)
-            ->M.moveChild(nodeId->I.convertFocusToChild, pid2)
-            ->Result.flatMap(ggg => ggg->M.removeNode(nodeId))
-          | (None, None) => g->M.addNode(nodeId, o)->M.removeNode(nodeId)
+            ->G.addNode(nodeId, o)
+            ->G.moveChild(nodeId->I.convertFocusToChild, pid2)
+            ->Result.flatMap(ggg => ggg->G.removeNode(nodeId))
+          | (None, None) => g->G.addNode(nodeId, o)->G.removeNode(nodeId)
           };
         switch (gg) {
         | Result.Ok(gg) => eq(g, gg)
-        | Result.Error(err) =>
-          [%log.error err; ("", "")];
+        | Result.Error(_err) =>
+          [%log.error _err; ("", "")];
           false;
         };
       },
@@ -234,75 +227,75 @@ describe("Graph: add/move/remove nodes", () => {
       Arbitrary.randomGraph2(500),
       gg => {
         let (expected, g2) = gg;
-        let n = expected->M.size;
+        let n = expected->G.size;
         // need to take the IDs at the root of input
-        let nodeIds = g2->M.childIdsOfRoot;
+        let nodeIds = g2->G.childIdsOfRoot;
 
         let parentNodeId =
           n == 0
             ? None
-            : expected->M.toArray->Array.shuffle->Array.getExn(0).parentNodeId;
+            : expected->G.toArray->Array.shuffle->Array.getExn(0).parentNodeId;
         let newParentNodeId =
           n == 0
             ? None
-            : expected->M.toArray->Array.shuffle->Array.getExn(0).parentNodeId;
+            : expected->G.toArray->Array.shuffle->Array.getExn(0).parentNodeId;
         let r =
           switch (parentNodeId, newParentNodeId) {
           | (Some(pid1), Some(pid2)) =>
             [%log.debug "got pid1, got pid2"; ("", "")];
             expected
-            ->M.setSubGraphForNode(pid1, g2)
+            ->G.setSubGraphForNode(pid1, g2)
             ->Result.flatMap(g => {
                 nodeIds->List.reduce(g->Result.Ok, (gg, i) => {
                   gg->Result.flatMap(ggg =>
-                    ggg->M.moveSubtree(i->I.convertFocusToChild, pid2)
+                    ggg->G.moveSubtree(i->I.convertFocusToChild, pid2)
                   )
                 })
               })
             ->Result.flatMap(g => {
                 nodeIds->List.reduce(g->Result.Ok, (gg, i) => {
-                  gg->Result.flatMap(ggg => ggg->M.removeSubtree(i))
+                  gg->Result.flatMap(ggg => ggg->G.removeSubtree(i))
                 })
               });
           | (Some(pid1), None) =>
             [%log.debug "got pid1, no pid2"; ("", "")];
             expected
-            ->M.setSubGraphForNode(pid1, g2)
+            ->G.setSubGraphForNode(pid1, g2)
             ->Result.flatMap(g => {
                 nodeIds->List.reduce(g->Result.Ok, (gg, i) => {
-                  gg->Result.flatMap(ggg => ggg->M.removeSubtree(i))
+                  gg->Result.flatMap(ggg => ggg->G.removeSubtree(i))
                 })
               });
           | (None, Some(pid2)) =>
             [%log.debug "no pid1, got pid2"; ("", "")];
             expected
-            ->M.setSubGraphForRoot(g2)
+            ->G.setSubGraphForRoot(g2)
             ->Result.flatMap(g => {
                 nodeIds->List.reduce(g->Result.Ok, (gg, i) => {
                   gg->Result.flatMap(ggg =>
-                    ggg->M.moveSubtree(i->I.convertFocusToChild, pid2)
+                    ggg->G.moveSubtree(i->I.convertFocusToChild, pid2)
                   )
                 })
               })
             ->Result.flatMap(g => {
                 nodeIds->List.reduce(g->Result.Ok, (gg, i) => {
-                  gg->Result.flatMap(ggg => ggg->M.removeSubtree(i))
+                  gg->Result.flatMap(ggg => ggg->G.removeSubtree(i))
                 })
               });
           | (None, None) =>
             [%log.debug "no pid1, no pid2"; ("", "")];
             expected
-            ->M.setSubGraphForRoot(g2)
+            ->G.setSubGraphForRoot(g2)
             ->Result.flatMap(g => {
                 nodeIds->List.reduce(g->Result.Ok, (gg, i) => {
-                  gg->Result.flatMap(ggg => ggg->M.removeSubtree(i))
+                  gg->Result.flatMap(ggg => ggg->G.removeSubtree(i))
                 })
               });
           };
         switch (r) {
         | Result.Ok(actual) => eq(expected, actual)
-        | Result.Error(err) =>
-          [%log.error err; ("", "")];
+        | Result.Error(_err) =>
+          [%log.error _err; ("", "")];
           false;
         };
       },
