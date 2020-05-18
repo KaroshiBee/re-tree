@@ -732,3 +732,14 @@ let fromArray =
           },
         );
 };
+
+let eq = (g, h) => {
+  let gMap = g.masterLookup;
+  let hMap = h.masterLookup;
+  gMap->Map.eq(hMap, (gg, hh) => {
+    Hashtbl.(
+      hash(gg.pathUp->P.toString) == hash(hh.pathUp->P.toString)
+      && hash(gg.value) == hash(hh.value)
+    )
+  });
+};

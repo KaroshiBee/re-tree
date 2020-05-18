@@ -45,6 +45,8 @@ module type GRAPH = {
   let toKeyValueArray: t('a) => array((ID.t, 'a));
   let toArray: t('a) => array('a);
   let fromArray: (array('a), 'a => ID.t, 'a => option(PID.t)) => t('a);
+
+  let eq: (t('a), t('a)) => bool;
 };
 
 module T: GRAPH = {

@@ -3,21 +3,17 @@ module Z = Zipper.Make(G);
 
 let _ = (); //weird bug in reason-mode reason-paren-level
 
-describe("can make and move around", () => {
-  //  1
-  // 2 3 5
-  //   4
-  let id5 = ID.create("5");
-  let g =
-    StandardGraph.(
-      makeGraph()
-      ->G.addNodeUnder(
-          id5,
-          {one: 5, two: "five"},
-          id1->I.convertFocusToParent,
-        )
-    );
+//  1
+// 2 3 5
+//   4
+let id5 = ID.create("5");
+let g =
+  StandardGraph.(
+    makeGraph()
+    ->G.addNodeUnder(id5, {one: 5, two: "five"}, id1->I.convertFocusToParent)
+  );
 
+describe("can make and move around", () => {
   it("can make", () => {
     let z = Z.create(g, StandardGraph.id1);
     [%log.debug z->Option.mapWithDefault("", Z.toString); ("", "")];
@@ -99,5 +95,78 @@ describe("can make and move around", () => {
       ->Option.flatMap(Z.down);
     [%log.debug z1->Option.mapWithDefault("", Z.toString); ("", "")];
     z1->Option.map(d => d->Z.focus->ID.toString) |> Assert.equal(Some("4"));
+  });
+});
+
+describe("Can split and reform", () => {
+  open StandardGraph;
+
+  it("can split", () => {
+    let z = Z.create(g, id3)->Option.getExn;
+    switch (z->Z.split) {
+    | Result.Ok(g) =>
+      (
+        g->G.size == 2
+        && g->G.containsId(id3)
+        && g->G.containsId(id4)
+        && g
+           ->G.parentId(id4)
+           ->Option.getExn
+           ->I.convertParentToFocus
+           ->ID.toString
+        == id3->ID.toString
+      )
+      |> Assert.ok
+    | Result.Error(_) => Assert.ok(false)
+    };
+  });
+
+  it("can reform when unchanged", () => {
+    let z = Z.create(g, id3)->Option.getExn;
+    switch (
+      z
+      ->Z.split
+      ->Result.flatMap(g => z->Z.reform(g))
+      ->Result.flatMap(Z.split)
+    ) {
+    | Result.Ok(gg) =>
+      g->G.subGraphForNode(id3)->Option.map(ggg => ggg->G.eq(gg))
+      |> Assert.equal(true->Some)
+    | Result.Error(_) => Assert.ok(false)
+    };
+  });
+
+  it("can reform when changed", () => {
+    let z = Z.create(g, id3)->Option.getExn;
+    [%log.debug
+      "hashing: "
+      ++ Hashtbl.hash(StandardGraph.{one: 1, two: "one"})->string_of_int;
+      ("", "")
+    ];
+    [%log.debug
+      "hashing: "
+      ++ Hashtbl.hash(StandardGraph.{one: 21, two: "one"})->string_of_int;
+      ("", "")
+    ];
+    switch (
+      z
+      ->Z.split
+      ->Result.flatMap(g => {
+          let gg =
+            g->G.setDataForNode(id4, _d =>
+              StandardGraph.{one: 100, two: "asdasd"}
+            );
+          z->Z.reform(gg);
+        })
+      ->Result.flatMap(zz => {
+          [%log.debug zz->Z.toString; ("", "")];
+          zz->Z.split;
+        })
+    ) {
+    | Result.Ok(gg) =>
+      g->G.subGraphForNode(id3)->Option.map(ggg => ggg->G.eq(gg))
+      |> Assert.equal(false->Some)
+    | Result.Error(err) => Assert.equal(~message=err, false, true)
+    };
   });
 });

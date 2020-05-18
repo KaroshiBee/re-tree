@@ -19,6 +19,9 @@ module type ZIPPER = {
   let right: t('a) => option(t('a));
   /* let current: t('a) => option(Graph.T.t('a)); */
   /* let context: t('a) => Graph.T.t('a); */
+
+  let split: t('a) => Result.t(graph('a), string);
+  let reform: (t('a), graph('a)) => Result.t(t('a), string);
 };
 
 module Make =
@@ -128,5 +131,30 @@ module Make =
       | [] => (t.focus_, t.left_, t.right_, t.down_)
       };
     {...t, focus_, left_, right_, down_}->Some;
+  };
+
+  let split = t =>
+    switch (t.background_->G.subGraphForNode(t.focus_)) {
+    | Some(g) => Result.Ok(g)
+    | None =>
+      Result.Error("Split: cannot find subgraph: " ++ t.focus_->ID.toString)
+    };
+
+  let reform = (t, inner) => {
+    switch (t.background_->G.subGraphForNode(t.focus_)) {
+    | Some(g) =>
+      inner->G.eq(g)
+        ? t->Result.Ok
+        : {
+          let res =
+            switch (t.up_) {
+            | Some(pid) => g->G.setSubGraphForNode(pid, inner)
+            | None => g->G.setSubGraphForRoot(inner)
+            };
+          res->Result.map(r => {...t, background_: r});
+        }
+    | None =>
+      Result.Error("Reform: cannot find subgraph: " ++ t.focus_->ID.toString)
+    };
   };
 };
