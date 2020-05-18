@@ -1,4 +1,5 @@
 open Test_utils;
+let _ = (); //weird bug in reason-mode reason-paren-level
 
 describe("construction", () => {
   it("canMakeFromString", () => {

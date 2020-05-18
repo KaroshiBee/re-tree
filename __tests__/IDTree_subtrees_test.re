@@ -1,4 +1,5 @@
 open Test_utils;
+let _ = (); //weird bug in reason-mode reason-paren-level
 
 describe("subtrees", () => {
   let t = StandardTree.t;
