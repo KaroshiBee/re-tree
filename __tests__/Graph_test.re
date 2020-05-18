@@ -52,6 +52,10 @@ describe("canMakeEmpty", () => {
   it("containsNothing", () => {
     g->M.containsId(ID.create("asd")) |> Assert.equal(false)
   });
+
+  it("hasZeroDepth", () => {
+    g->M.maxDepth |> Assert.equal(0)
+  });
 });
 
 describe("addImmediateChildren", () => {
@@ -65,8 +69,8 @@ describe("addImmediateChildren", () => {
     g->M.containsId(ID.create("1")) |> Assert.equal(true)
   });
 
-  it("childIsInMasterLookup", () => {
-    g->M.containsId(ID.create("1")) |> Assert.equal(true)
+  it("hasDepthZero", () => {
+    g->M.maxDepth |> Assert.equal(0)
   });
 
   let data = g->M.dataForNode(ID.create("1"))->Option.getExn;
@@ -107,6 +111,10 @@ describe("addParentChild", () => {
         {one: 1, two: "one"},
         PID.create("2"),
       );
+
+  it("hasDepthTwo", () => {
+    g->M.maxDepth |> Assert.equal(2)
+  });
 
   it("childAdded2", () => {
     g->M.containsId(ID.create("2")) |> Assert.equal(true)

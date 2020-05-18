@@ -18,7 +18,7 @@ module type GRAPH = {
   let parentId: (t('a), ID.t) => option(PID.t);
   let dataForNode: (t('a), ID.t) => option('a);
   let depth: (t('a), ID.t) => int;
-  let maxDepth: (t('a), ID.t) => int;
+  let maxDepth: t('a) => int;
   let setDataForNode: (t('a), ID.t, 'a => 'a) => t('a);
   let subGraphForNode: (t('a), ID.t) => option(t('a));
   let childIdsOfRoot: t('a) => list(ID.t);

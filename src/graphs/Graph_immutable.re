@@ -83,7 +83,7 @@ let depth = (graph: t('a), id: ID.t): int => {
   graph->pathFromNode(id)->Option.map(P.size)->Option.getWithDefault(0);
 };
 
-let maxDepth = (graph: t('a), id: ID.t): int => {
+let maxDepth = (graph: t('a)): int => {
   graph.masterLookup
   ->Map.reduce(0, (acc, _ky, dataWithPath) => {
       max(acc, dataWithPath.pathUp->P.size)
