@@ -9,17 +9,25 @@ module type ZIPPER = {
   type focus;
   type graph;
   type t;
-  let createAt: (graph, focus) => option(t);
-  let create: graph => option(t);
+  type m('a);
+  let createAt: (graph, focus) => m(t);
+  let create: graph => m(t);
   let toString: t => string;
 
+  //  monad / functor interface
+  let flatMap: (m('a), 'a => m('b)) => m('b);
+  let map: (m('a), 'a => 'b) => m('b);
+  let mapWithDefault: (m('a), 'b, 'a => 'b) => 'b;
+  let getExn: m('a) => 'a;
+  let getOpt: m('a) => option('a);
+  let getResult: m('a) => Result.t('a, string);
+
+  // zipper
   let focus: t => focus;
-  let up: t => option(t);
-  let down: t => option(t);
-  let left: t => option(t);
-  let right: t => option(t);
-  /* let current: t => option(Graph.T.t); */
-  /* let context: t => Graph.T.t; */
+  let up: t => m(t);
+  let down: t => m(t);
+  let left: t => m(t);
+  let right: t => m(t);
 
   let split: t => Result.t(graph, string);
   let reform: (t, graph) => Result.t(t, string);
@@ -38,6 +46,7 @@ module Make =
     right_: list(ID.t),
     background_: G.t,
   };
+  type m('a) = option('a);
 
   let _sortedIds = ids => ids->List.sort(Pervasives.compare);
 
@@ -84,6 +93,17 @@ module Make =
     ++ ", right: ["
     ++ (t.right_->List.map(ID.toString) |> String.concat(","))
     ++ "]";
+
+  let flatMap = Option.flatMap;
+  let map = Option.map;
+  let mapWithDefault = Option.mapWithDefault;
+  let getExn = Option.getExn;
+  let getOpt = t => t;
+  let getResult = t =>
+    switch (t->getOpt) {
+    | Some(tt) => Result.Ok(tt)
+    | None => Result.Error("Zipper is none")
+    };
 
   let focus = t => t.focus_;
 
