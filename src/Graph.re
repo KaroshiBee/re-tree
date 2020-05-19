@@ -35,6 +35,7 @@ module type GRAPH = {
   let removeSubtree: (t('a), ID.t) => Result.t(t('a), string);
   let setSubGraphForNode: (t('a), PID.t, t('a)) => Result.t(t('a), string);
   let setSubGraphForRoot: (t('a), t('a)) => Result.t(t('a), string);
+  let trimPaths: (t('a), option(P.t)) => t('a);
   let moveSubtree: (t('a), CID.t, PID.t) => Result.t(t('a), string);
   let map: (t('a), 'a => 'b) => t('b);
   // 'a => 'a because only modifying one node

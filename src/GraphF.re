@@ -79,6 +79,7 @@ module type GRAPH = {
   let removeSubtree: (t, ID.t) => Result.t(t, string);
   let setSubGraphForNode: (t, PID.t, t) => Result.t(t, string);
   let setSubGraphForRoot: (t, t) => Result.t(t, string);
+  let trimPaths: (t, option(P.t)) => t;
   let moveSubtree: (t, CID.t, PID.t) => Result.t(t, string);
   let map: (t, el => el) => t;
   // el => el because only modifying one node
@@ -224,19 +225,16 @@ module T =
         /*   ); */
         /*   ("", "") */
         /* ]; */
-        // remove these from graph and trim the remaining paths to new root
-        let masterLookup =
-          graph.masterLookup
-          ->Map.removeMany(cids)
-          ->Map.map(d => d->EL.setPathUp(d->EL.pathUp->P.trim(path)));
+        // remove these from graph
+        let masterLookup = graph.masterLookup->Map.removeMany(cids);
         let ret = {masterLookup, tree};
         /* [%log.debug "subGraphForNode returning: " ++ ret->toString; ("", "")]; */
         ret->Some;
       | None =>
         [%log.error
-          "subGraphForNode: cannot find IDTree: "
+          "subGraphForNode: cannot find IDTree: path - "
           ++ path->P.toString
-          ++ ", "
+          ++ ", id - "
           ++ id->ID.toString;
           ("", "")
         ];
@@ -254,12 +252,18 @@ module T =
 
   let childIdsOfRoot = graph => {
     [%log.debug "childIdsOfRoot"; ("", "")];
-    graph.tree
-    ->IDTree.makeIntoRootedSubtree
-    ->IDTree.children
-    ->Map.keysToArray
-    ->List.fromArray
-    ->List.map(I.convertChildToFocus);
+    let ret =
+      graph.tree
+      ->IDTree.makeIntoRootedSubtree
+      ->IDTree.children
+      ->Map.keysToArray
+      ->List.fromArray
+      ->List.map(I.convertChildToFocus);
+    [%log.debug
+      "ret: " ++ (ret->List.map(ID.toString) |> String.concat(","));
+      ("", "")
+    ];
+    ret;
   };
 
   let childrenOfRoot = graph => {
@@ -578,6 +582,17 @@ module T =
       });
   };
 
+  let trimPaths = (graph, pathToTrimOff) => {
+    switch (pathToTrimOff) {
+    | Some(pth) =>
+      let masterLookup =
+        graph.masterLookup
+        ->Map.map(d => d->EL.setPathUp(d->EL.pathUp->P.trim(pth)));
+      {...graph, masterLookup};
+    | None => graph
+    };
+  };
+
   let moveSubtree = (graph, from, under) => {
     let id = from->Identity.convertChildToFocus;
     let pid = under->I.convertParentToFocus;
@@ -806,7 +821,7 @@ module T =
     data->Array.size == 0
       ? empty()
       : topoSort(data, nodeId, parentNodeId)
-        ->Array.reduceWithIndex(empty(), (graph, d, i) =>
+        ->Array.reduceWithIndex(empty(), (graph, d, i)
             /* [%log.debug */
             /*   "adding node [" */
             /*   ++ d->nodeId->ID.toString */
@@ -818,16 +833,17 @@ module T =
             /*   ++ "]"; */
             /*   ("", "") */
             /* ]; */
-            if (i == 0) {
-              graph->addNode(d->nodeId, d);
-            } else {
-              graph->addNodeUnder(
-                d->nodeId,
-                d,
-                d->parentNodeId->Option.getExn,
-              );
-            }
-          );
+            =>
+              if (i == 0) {
+                graph->addNode(d->nodeId, d);
+              } else {
+                graph->addNodeUnder(
+                  d->nodeId,
+                  d,
+                  d->parentNodeId->Option.getExn,
+                );
+              }
+            );
   };
 
   let eq = (g, h) => {

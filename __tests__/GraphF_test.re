@@ -373,6 +373,63 @@ describe("setSubGraphForNode-should-set-subgraph", () => {
   };
 });
 
+describe("setSubGraphForNode-should-set-subgraph that has been extracted", () => {
+  let g = FancyGraph.makeGraph();
+  let _test = (g, s) => {
+    it("_test", () => {
+      g->GF.containsId(ID.create(s)) |> Assert.equal(true)
+    });
+  };
+  _test(g, "1");
+  _test(g, "2");
+  _test(g, "3");
+  _test(g, "4");
+
+  [%log.debug "get subgraph"; ("", "")];
+  let gChild = g->GF.subGraphForNode(FancyGraph.id3)->Option.getExn;
+  [%log.debug "about to set new subgraph"; ("", "")];
+  switch (
+    g->GF.setSubGraphForNode(FancyGraph.id3->I.convertFocusToParent, gChild)
+  ) {
+  | Ok(g1) => it("ok", () => {
+                g->GF.eq(g1) |> Assert.equal(true)
+              })
+  | Error(_) => it("fail", () => {
+                  true |> Assert.equal(false)
+                })
+  };
+});
+
+describe(
+  "setSubGraphForRoot-should on extracted subgraph and new empty graph", () => {
+  let g = FancyGraph.makeGraph();
+  let _test = (g, s) => {
+    it("_test", () => {
+      g->GF.containsId(ID.create(s)) |> Assert.equal(true)
+    });
+  };
+  _test(g, "1");
+  _test(g, "2");
+  _test(g, "3");
+  _test(g, "4");
+
+  [%log.debug "get subgraph"; ("", "")];
+  let gChild = g->GF.subGraphForNode(FancyGraph.id3)->Option.getExn;
+  [%log.debug "RAAAA got subgraph: " ++ gChild->GF.toString; ("", "")];
+  [%log.debug "about to set new subgraph"; ("", "")];
+  let pth = P.fromPathToRootList(["1"])->Some;
+  switch (GF.empty()->GF.setSubGraphForRoot(gChild->GF.trimPaths(pth))) {
+  | Ok(g1) =>
+    it("ok", () => {
+      gChild->GF.eq(g1)
+      |> Assert.equal(false) // different paths
+    })
+  | Error(_) => it("fail", () => {
+                  true |> Assert.equal(false)
+                })
+  };
+});
+
 describe("updteChildren-should-update-only-children", () => {
   let _test = (g, n, vl) => {
     let data = g->GF.dataForNode(ID.create(n))->Option.getExn;

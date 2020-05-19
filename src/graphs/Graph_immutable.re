@@ -480,6 +480,17 @@ let setSubGraphForRoot =
     });
 };
 
+let trimPaths = (graph, pathToTrimOff) => {
+  switch (pathToTrimOff) {
+  | Some(pth) =>
+    let masterLookup =
+      graph.masterLookup
+      ->Map.map(d => {...d, pathUp: d.pathUp->P.trim(pth)});
+    {...graph, masterLookup};
+  | None => graph
+  };
+};
+
 let moveSubtree = (graph: t('a), from: CID.t, under: PID.t) => {
   let id = from->Identity.convertChildToFocus;
   let pid = under->I.convertParentToFocus;

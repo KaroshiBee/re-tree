@@ -121,46 +121,35 @@ describe("Can split and reform", () => {
     | Result.Error(err) => Assert.equal(~message=err, 1, 0)
     };
   });
+
   it("can reform when unchanged", () => {
     let z = Z.createAt(g, id3)->Z.getExn;
-    switch (
-      z
-      ->Z.split
-      ->Result.flatMap(g => z->Z.reform(g))
-      ->Result.flatMap(Z.split)
-    ) {
-    | Result.Ok(gg) =>
-      g->GF.subGraphForNode(id3)->Option.map(ggg => ggg->GF.eq(gg))
-      |> Assert.equal(true->Some)
+    switch (z->Z.split->Result.flatMap(g => z->Z.reform(g))) {
+    | Result.Ok(z1) =>
+      [%log.debug "original graph: " ++ g->GF.toString; ("", "")];
+      [%log.debug "new graph: " ++ z1->Z.background->GF.toString; ("", "")];
+      z1->Z.background->GF.eq(g) |> Assert.equal(true);
     | Result.Error(_) => Assert.ok(false)
     };
   });
+
   it("can reform when changed", () => {
     let z = Z.createAt(g, id3)->Z.getExn;
     switch (
       z
       ->Z.split
       ->Result.flatMap(g => {
-          [%log.debug "after split: " ++ g->GF.toString; ("", "")];
+          //          [%log.debug "after split: " ++ g->GF.toString; ("", "")];
           let gg = g->GF.setDataForNode(id4, _d => {one: 100, two: "asdasd"});
-          [%log.debug "after set data: " ++ gg->GF.toString; ("", "")];
+          //          [%log.debug "after set data: " ++ gg->GF.toString; ("", "")];
           z->Z.reform(gg);
         })
-      ->Result.flatMap(zz => {
-          [%log.debug "after reform: " ++ zz->Z.toString; ("", "")];
-          zz->Z.split;
-        })
     ) {
-    | Result.Ok(gg) =>
-      g
-      ->GF.subGraphForNode(id3)
-      ->Option.map(ggg => {
-          [%log.debug "original subgraph: " ++ ggg->GF.toString; ("", "")];
-          [%log.debug "new subgraph: " ++ gg->GF.toString; ("", "")];
-          ggg->GF.eq(gg);
-        })
-      |> Assert.equal(false->Some)
-    | Result.Error(err) => Assert.equal(~message=err, false, true)
+    | Result.Ok(z1) =>
+      [%log.debug "original graph 2: " ++ g->GF.toString; ("", "")];
+      [%log.debug "new graph 2: " ++ z1->Z.background->GF.toString; ("", "")];
+      z1->Z.background->GF.eq(g) |> Assert.equal(false);
+    | Result.Error(_) => Assert.ok(false)
     };
   });
 });

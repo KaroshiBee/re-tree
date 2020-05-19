@@ -28,7 +28,9 @@ module type ZIPPER = {
   let down: t => m(t);
   let left: t => m(t);
   let right: t => m(t);
+  let background: t => graph;
 
+  // TODO get this working
   let split: t => Result.t(graph, string);
   let reform: (t, graph) => Result.t(t, string);
 };
@@ -156,12 +158,17 @@ module Make =
     {...t, focus_, left_, right_, down_}->Some;
   };
 
+  let background = t => t.background_;
+
   let split = t => {
     let res =
       switch (t.background_->G.subGraphForNode(t.focus_)) {
       | Some(g) =>
-        [%log.debug "adding to empty"; ("", "")];
-        G.empty()->G.setSubGraphForRoot(g);
+        /* [%log.debug "adding to empty"; ("", "")]; */
+        G.empty()
+        ->G.setSubGraphForRoot(
+            g->G.trimPaths(t.background_->G.pathFromNode(t.focus_)),
+          )
       | None =>
         Result.Error("Split: cannot find subgraph: " ++ t.focus_->ID.toString)
       };
@@ -173,8 +180,11 @@ module Make =
   };
 
   let reform = (t, inner) => {
+    let pth = t.background_->G.pathFromNode(t.focus_);
     switch (
-      t.background_->G.subGraphForNode(t.focus_),
+      t.background_
+      ->G.subGraphForNode(t.focus_)
+      ->Option.map(g => g->G.trimPaths(pth)),
       inner->G.subGraphForNode(t.focus_),
     ) {
     | (Some(g), Some(g1)) =>
