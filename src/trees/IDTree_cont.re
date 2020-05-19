@@ -310,7 +310,7 @@ let getSubtree = (tree: t, path: P.t, id: ID.t): option(t) => {
     : {
       let pathFromRoot =
         path->P.pathFromRoot->List.map(I.convertParentToChild);
-      [%log.debug "getSubtree: path in " ++ path->P.toString; ("", "")];
+      /* [%log.debug "getSubtree: path in " ++ path->P.toString; ("", "")]; */
       switch (tree->_getSubtreeAtPath(pathFromRoot)) {
       | Some(parentTree) =>
         parentTree->children->Map.get(id->I.convertFocusToChild)
