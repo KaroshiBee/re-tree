@@ -39,6 +39,8 @@ module Make =
     background_: G.t,
   };
 
+  let _sortedIds = ids => ids->List.sort(Pervasives.compare);
+
   let _siblings = (up, g) =>
     up
     ->Option.map(pid => g->G.childIds(pid->I.convertParentToFocus))
@@ -49,7 +51,7 @@ module Make =
     g->G.containsId(focus)
       ? {
         let up_ = g->G.parentId(focus);
-        let down_ = g->G.childIds(focus)->List.sort(Pervasives.compare);
+        let down_ = g->G.childIds(focus)->_sortedIds;
         let siblings = _siblings(up_, g);
         let index = siblings->List.toArray->Array.getIndexBy(i => i == focus);
         let lr = index->Option.flatMap(i => {siblings->List.splitAt(i)});
@@ -63,7 +65,7 @@ module Make =
   };
 
   let create = g =>
-    switch (g->G.childIdsOfRoot->List.sort(Pervasives.compare)) {
+    switch (g->G.childIdsOfRoot->_sortedIds) {
     | [hd, ..._tl] => g->createAt(hd)
     | [] => None
     };
@@ -101,7 +103,7 @@ module Make =
         left_: [],
         right_: tl,
         up_: t.focus_->I.convertFocusToParent->Some,
-        down_: t.background_->G.childIds(hd)->List.sort(Pervasives.compare),
+        down_: t.background_->G.childIds(hd)->_sortedIds,
       }
       ->Some
     | [] => t->Some
