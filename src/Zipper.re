@@ -9,7 +9,8 @@ module type ZIPPER = {
   type focus;
   type graph;
   type t;
-  let create: (graph, focus) => option(t);
+  let createAt: (graph, focus) => option(t);
+  let create: graph => option(t);
   let toString: t => string;
 
   let focus: t => focus;
@@ -42,16 +43,13 @@ module Make =
     up
     ->Option.map(pid => g->G.childIds(pid->I.convertParentToFocus))
     ->Option.getWithDefault([])
-    ->List.sort((x, y) => Pervasives.compare(x, y));
+    ->List.sort(Pervasives.compare);
 
-  let create = (g, focus) => {
+  let createAt = (g, focus) => {
     g->G.containsId(focus)
       ? {
         let up_ = g->G.parentId(focus);
-        let down_ =
-          g
-          ->G.childIds(focus)
-          ->List.sort((x, y) => Pervasives.compare(x, y));
+        let down_ = g->G.childIds(focus)->List.sort(Pervasives.compare);
         let siblings = _siblings(up_, g);
         let index = siblings->List.toArray->Array.getIndexBy(i => i == focus);
         let lr = index->Option.flatMap(i => {siblings->List.splitAt(i)});
@@ -63,6 +61,12 @@ module Make =
       }
       : None;
   };
+
+  let create = g =>
+    switch (g->G.childIdsOfRoot->List.sort(Pervasives.compare)) {
+    | [hd, ..._tl] => g->createAt(hd)
+    | [] => None
+    };
 
   let toString = t =>
     "Focus: "
@@ -85,7 +89,7 @@ module Make =
   let up = t =>
     t.up_
     ->Option.flatMap(pid =>
-        t.background_->create(pid->I.convertParentToFocus)
+        t.background_->createAt(pid->I.convertParentToFocus)
       );
 
   let down = t =>
@@ -97,10 +101,7 @@ module Make =
         left_: [],
         right_: tl,
         up_: t.focus_->I.convertFocusToParent->Some,
-        down_:
-          t.background_
-          ->G.childIds(hd)
-          ->List.sort((x, y) => Pervasives.compare(x, y)),
+        down_: t.background_->G.childIds(hd)->List.sort(Pervasives.compare),
       }
       ->Some
     | [] => t->Some

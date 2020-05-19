@@ -19,24 +19,33 @@ let g =
 
 describe("can make and move around", () => {
   it("can make", () => {
-    let z = Z.create(g, FancyGraph.id1);
+    let z = Z.createAt(g, FancyGraph.id1);
     [%log.debug z->Option.mapWithDefault("", Z.toString); ("", "")];
     z->Option.map(zz => zz->Z.focus->ID.toString) |> Assert.equal("1"->Some);
   });
 
+  it("can make at root", () => {
+    let z = Z.create(g);
+    [%log.debug
+      z->Option.mapWithDefault("FAILED TO MAKE", Z.toString);
+      ("", "")
+    ];
+    z->Option.map(zz => zz->Z.focus->ID.toString) |> Assert.equal("1"->Some);
+  });
+
   it("can make in middle and move", () => {
-    let z = Z.create(g, FancyGraph.id3)->Option.flatMap(Z.right);
+    let z = Z.createAt(g, FancyGraph.id3)->Option.flatMap(Z.right);
     [%log.debug z->Option.mapWithDefault("", Z.toString); ("", "")];
     z->Option.map(zz => zz->Z.focus->ID.toString) |> Assert.equal("5"->Some);
   });
   it("can move right", () => {
-    let z1 = Z.create(g, FancyGraph.id2)->Option.flatMap(Z.right);
+    let z1 = Z.createAt(g, FancyGraph.id2)->Option.flatMap(Z.right);
     [%log.debug z1->Option.mapWithDefault("", Z.toString); ("", "")];
     z1->Option.map(d => d->Z.focus->ID.toString) |> Assert.equal(Some("3"));
   });
   it("can move right off end", () => {
     let z1 =
-      Z.create(g, FancyGraph.id3)
+      Z.createAt(g, FancyGraph.id3)
       ->Option.flatMap(Z.right)
       ->Option.flatMap(Z.right)
       ->Option.flatMap(Z.right)
@@ -45,13 +54,13 @@ describe("can make and move around", () => {
     z1->Option.map(d => d->Z.focus->ID.toString) |> Assert.equal(Some("5"));
   });
   it("can move left", () => {
-    let z1 = Z.create(g, id5)->Option.flatMap(Z.left);
+    let z1 = Z.createAt(g, id5)->Option.flatMap(Z.left);
     [%log.debug z1->Option.mapWithDefault("", Z.toString); ("", "")];
     z1->Option.map(d => d->Z.focus->ID.toString) |> Assert.equal(Some("3"));
   });
   it("can move left off end", () => {
     let z1 =
-      Z.create(g, id5)
+      Z.createAt(g, id5)
       ->Option.flatMap(Z.left)
       ->Option.flatMap(Z.left)
       ->Option.flatMap(Z.left)
@@ -61,13 +70,13 @@ describe("can make and move around", () => {
     z1->Option.map(d => d->Z.focus->ID.toString) |> Assert.equal(Some("2"));
   });
   it("can move up", () => {
-    let z1 = Z.create(g, FancyGraph.id4)->Option.flatMap(Z.up);
+    let z1 = Z.createAt(g, FancyGraph.id4)->Option.flatMap(Z.up);
     [%log.debug z1->Option.mapWithDefault("", Z.toString); ("", "")];
     z1->Option.map(d => d->Z.focus->ID.toString) |> Assert.equal(Some("3"));
   });
   it("can move up off top", () => {
     let z1 =
-      Z.create(g, FancyGraph.id4)
+      Z.createAt(g, FancyGraph.id4)
       ->Option.flatMap(Z.up)
       ->Option.flatMap(Z.up)
       ->Option.flatMap(Z.up)
@@ -77,13 +86,13 @@ describe("can make and move around", () => {
     z1->Option.map(d => d->Z.focus->ID.toString) |> Assert.equal(None);
   });
   it("can move down", () => {
-    let z1 = Z.create(g, FancyGraph.id3)->Option.flatMap(Z.down);
+    let z1 = Z.createAt(g, FancyGraph.id3)->Option.flatMap(Z.down);
     [%log.debug z1->Option.mapWithDefault("", Z.toString); ("", "")];
     z1->Option.map(d => d->Z.focus->ID.toString) |> Assert.equal(Some("4"));
   });
   it("can move down off bottom", () => {
     let z1 =
-      Z.create(g, FancyGraph.id4)
+      Z.createAt(g, FancyGraph.id4)
       ->Option.flatMap(Z.down)
       ->Option.flatMap(Z.down)
       ->Option.flatMap(Z.down)
@@ -98,7 +107,7 @@ describe("Can split and reform", () => {
   open FancyGraph;
   it("can split", () => {
     [%log.debug "HEREE"; ("", "")];
-    let z = Z.create(g, id3)->Option.getExn;
+    let z = Z.createAt(g, id3)->Option.getExn;
     [%log.debug "AFTERRR"; ("", "")];
     switch (z->Z.split) {
     | Result.Ok(g) =>
@@ -118,7 +127,7 @@ describe("Can split and reform", () => {
     };
   });
   it("can reform when unchanged", () => {
-    let z = Z.create(g, id3)->Option.getExn;
+    let z = Z.createAt(g, id3)->Option.getExn;
     switch (
       z
       ->Z.split
@@ -133,7 +142,7 @@ describe("Can split and reform", () => {
   });
 
   it("can reform when changed", () => {
-    let z = Z.create(g, id3)->Option.getExn;
+    let z = Z.createAt(g, id3)->Option.getExn;
     switch (
       z
       ->Z.split
