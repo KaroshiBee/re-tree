@@ -3,7 +3,7 @@ let _ = (); //weird bug in reason-mode reason-paren-level
 
 describe("construction", () => {
   let p = P.empty();
-
+  [%log.debug "empty"; ("p", p)];
   it("rootOfEmptyIsNone", () => {
     p->P.root |> Assert.equal(None)
   });

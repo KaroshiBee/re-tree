@@ -47,7 +47,7 @@ module Other = {
 };
 
 module E = GraphF.MakeElement(Other);
-module GF2 = GraphF.T(E);
+module GF2 = GraphF.Make(E);
 
 module Arbitrary = {
   let data =
@@ -72,7 +72,7 @@ module Arbitrary = {
 
   let _randGraph = dst => {
     let n = dst->MutableStack.size;
-    [%log.debug "_randGraph: size: " ++ n->string_of_int; ("", "")];
+    // [%log.debug "_randGraph: size: " ++ n->string_of_int; ("", "")];
     n == 0
       ? constant(GF2.empty())
       : {
@@ -114,7 +114,7 @@ module Arbitrary = {
           src := (src^)->Array.concat([|b|]);
         });
         let m = (g^)->GF2.size;
-        [%log.debug "_randGraph: size after: " ++ m->string_of_int; ("", "")];
+        // [%log.debug "_randGraph: size after: " ++ m->string_of_int; ("", "")];
         m == 0
           ? GF2.empty()->constant
           : {
@@ -157,14 +157,14 @@ module Arbitrary = {
             : ();
         };
         aux(n / 2);
-        [%log.debug
-          "randomGraphs2: ids1 " ++ ids1->MutableStack.size->string_of_int;
-          ("", "")
-        ];
-        [%log.debug
-          "randomGraphs2: ids2 " ++ ids2->MutableStack.size->string_of_int;
-          ("", "")
-        ];
+        /* [%log.debug */
+        /*   "randomGraphs2: ids1 " ++ ids1->MutableStack.size->string_of_int; */
+        /*   ("", "") */
+        /* ]; */
+        /* [%log.debug */
+        /*   "randomGraphs2: ids2 " ++ ids2->MutableStack.size->string_of_int; */
+        /*   ("", "") */
+        /* ]; */
         tuple2(_randGraph(ids1), _randGraph(ids2));
       });
   };
@@ -240,19 +240,19 @@ describe("Graph: add/move/remove nodes", () => {
           expected->Array.shuffle->Array.getExn(0).parentNodeId;
         let newParentNodeId =
           expected->Array.shuffle->Array.getExn(0).parentNodeId;
-        [%log.debug
-          "ids: "
-          ++ nodeId->ID.toString
-          ++ ", "
-          ++ parentNodeId
-             ->Option.map(PID.toString)
-             ->Option.getWithDefault("no parent")
-          ++ ", "
-          ++ newParentNodeId
-             ->Option.map(PID.toString)
-             ->Option.getWithDefault("no parent");
-          ("", "")
-        ];
+        /* [%log.debug */
+        /*   "ids: " */
+        /*   ++ nodeId->ID.toString */
+        /*   ++ ", " */
+        /*   ++ parentNodeId */
+        /*      ->Option.map(PID.toString) */
+        /*      ->Option.getWithDefault("no parent") */
+        /*   ++ ", " */
+        /*   ++ newParentNodeId */
+        /*      ->Option.map(PID.toString) */
+        /*      ->Option.getWithDefault("no parent"); */
+        /*   ("", "") */
+        /* ]; */
         let o: Other.t = {nodeId, parentNodeId, data: d};
         let gg =
           switch (parentNodeId, newParentNodeId) {
@@ -303,7 +303,7 @@ describe("Graph: add/move/remove nodes", () => {
         let r =
           switch (parentNodeId, newParentNodeId) {
           | (Some(pid1), Some(pid2)) =>
-            [%log.debug "got pid1, got pid2"; ("", "")];
+            /* [%log.debug "got pid1, got pid2"; ("", "")]; */
             expected
             ->GF2.setSubGraphForNode(pid1, g2)
             ->Result.flatMap(g => {
@@ -317,18 +317,18 @@ describe("Graph: add/move/remove nodes", () => {
                 nodeIds->List.reduce(g->Result.Ok, (gg, i) => {
                   gg->Result.flatMap(ggg => ggg->GF2.removeSubtree(i))
                 })
-              });
+              })
           | (Some(pid1), None) =>
-            [%log.debug "got pid1, no pid2"; ("", "")];
+            /* [%log.debug "got pid1, no pid2"; ("", "")]; */
             expected
             ->GF2.setSubGraphForNode(pid1, g2)
             ->Result.flatMap(g => {
                 nodeIds->List.reduce(g->Result.Ok, (gg, i) => {
                   gg->Result.flatMap(ggg => ggg->GF2.removeSubtree(i))
                 })
-              });
+              })
           | (None, Some(pid2)) =>
-            [%log.debug "no pid1, got pid2"; ("", "")];
+            /* [%log.debug "no pid1, got pid2"; ("", "")]; */
             expected
             ->GF2.setSubGraphForRoot(g2)
             ->Result.flatMap(g => {
@@ -342,16 +342,16 @@ describe("Graph: add/move/remove nodes", () => {
                 nodeIds->List.reduce(g->Result.Ok, (gg, i) => {
                   gg->Result.flatMap(ggg => ggg->GF2.removeSubtree(i))
                 })
-              });
+              })
           | (None, None) =>
-            [%log.debug "no pid1, no pid2"; ("", "")];
+            /* [%log.debug "no pid1, no pid2"; ("", "")]; */
             expected
             ->GF2.setSubGraphForRoot(g2)
             ->Result.flatMap(g => {
                 nodeIds->List.reduce(g->Result.Ok, (gg, i) => {
                   gg->Result.flatMap(ggg => ggg->GF2.removeSubtree(i))
                 })
-              });
+              })
           };
         switch (r) {
         | Result.Ok(actual) => eq(expected, actual)

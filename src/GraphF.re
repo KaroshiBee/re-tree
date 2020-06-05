@@ -26,7 +26,8 @@ module type GRAPH_ELEMENT = {
   let toString: t => string;
 };
 
-module MakeElement = (H: HASHABLE) : (GRAPH_ELEMENT with type el = H.t) => {
+module MakeElement = (H: HASHABLE) => {
+  //: (GRAPH_ELEMENT with type el = H.t) => {
   type el = H.t;
   type t = {
     pathUp_: P.t,
@@ -48,7 +49,7 @@ module MakeElement = (H: HASHABLE) : (GRAPH_ELEMENT with type el = H.t) => {
     ++ "}";
 };
 
-module type GRAPH = {
+module type T = {
   type el;
   type node;
   type t;
@@ -93,9 +94,8 @@ module type GRAPH = {
   let eq: (t, t) => bool;
 };
 
-module T =
-       (EL: GRAPH_ELEMENT)
-       : (GRAPH with type el = EL.el and type node = EL.t) => {
+module Make = (EL: GRAPH_ELEMENT) => {
+  //       : (GRAPH with type el = EL.el and type node = EL.t) => {
   type el = EL.el;
   type node = EL.t;
   type t = {
@@ -251,7 +251,7 @@ module T =
   };
 
   let childIdsOfRoot = graph => {
-    [%log.debug "childIdsOfRoot"; ("", "")];
+    /* [%log.debug "childIdsOfRoot"; ("", "")]; */
     let ret =
       graph.tree
       ->IDTree.makeIntoRootedSubtree
@@ -259,15 +259,15 @@ module T =
       ->Map.keysToArray
       ->List.fromArray
       ->List.map(I.convertChildToFocus);
-    [%log.debug
-      "ret: " ++ (ret->List.map(ID.toString) |> String.concat(","));
-      ("", "")
-    ];
+    /* [%log.debug */
+    /*   "ret: " ++ (ret->List.map(ID.toString) |> String.concat(",")); */
+    /*   ("", "") */
+    /* ]; */
     ret;
   };
 
   let childrenOfRoot = graph => {
-    [%log.debug "childrenOfRoot"; ("", "")];
+    /* [%log.debug "childrenOfRoot"; ("", "")]; */
     graph
     ->childIdsOfRoot
     ->List.reduce([], (trees, id) => {
@@ -491,11 +491,11 @@ module T =
             Result.Ok(ret);
           });
         | None =>
-          [%log.debug
-            "didn't get pathUp for id: " ++ id->ID.toString;
-            ("", "")
-          ];
-          Result.Ok(graph);
+          /* [%log.debug */
+          /*   "didn't get pathUp for id: " ++ id->ID.toString; */
+          /*   ("", "") */
+          /* ]; */
+          Result.Ok(graph)
         };
       };
   };

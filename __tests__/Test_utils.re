@@ -134,7 +134,7 @@ module GraphHashable = {
 };
 
 module GraphElement = GraphF.MakeElement(GraphHashable);
-module GF = GraphF.T(GraphElement);
+module GF = GraphF.Make(GraphElement);
 
 module FancyGraph = {
   let id1 = ID.create("1");
