@@ -50,6 +50,4 @@ module type GRAPH = {
   let eq: (t('a), t('a)) => bool;
 };
 
-module T: GRAPH = {
-  include Graph_immutable;
-};
+module T: GRAPH with type dataWithPath('a) = Graph_immutable.dataWithPath('a) = Graph_immutable;

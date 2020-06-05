@@ -38,6 +38,4 @@ module type IDTREE = {
   let eq: (t, t) => bool;
 };
 
-module T: IDTREE = {
-  include IDTree_cont;
-};
+module T: IDTREE = IDTree_cont;

@@ -21,6 +21,4 @@ module type PATH = {
   let trim: (t, t) => t;
 };
 
-module T: PATH with type el = PID.t = {
-  include Path_immutable;
-};
+module T: PATH with type el = Path_immutable.el = Path_immutable;
