@@ -1,5 +1,6 @@
 module Make = (()) => {
   module type Id_t = {
+    exception Empty_id;
     type t;
     let create: string => t;
     let toString: t => string;
