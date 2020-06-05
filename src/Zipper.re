@@ -5,7 +5,7 @@ module CID = I.ChildId;
 module P = Path.T;
 module type GRAPH = GraphF.T;
 
-module type ZIPPER = {
+module type T = {
   type focus;
   type graph;
   type t;
@@ -35,9 +35,8 @@ module type ZIPPER = {
   let reform: (t, graph) => Result.t(t, string);
 };
 
-module Make =
-       (G: GRAPH)
-       : (ZIPPER with type focus = ID.t and type graph = G.t) => {
+module Make = (G: GRAPH) => {
+  //       : (ZIPPER with type focus = ID.t and type graph = G.t) => {
   type focus = ID.t;
   type graph = G.t;
   type t = {
