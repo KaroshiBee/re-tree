@@ -3,7 +3,7 @@ module ID = I.FocusId;
 module PID = I.ParentId;
 module CID = I.ChildId;
 module P = Path.T;
-module type GRAPH = GraphF.GRAPH;
+module type GRAPH = GraphF.T;
 
 module type ZIPPER = {
   type focus;
